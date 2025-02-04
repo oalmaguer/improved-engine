@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import ImageLightbox from "../components/image-lightbox/image-lightbox";
 
 interface Image {
   id: number;
@@ -68,10 +69,10 @@ export default function MyCreations() {
             key={image.id}
             className="bg-white rounded-lg shadow-md overflow-hidden"
           >
-            <img
+            <ImageLightbox
               src={image.image_url}
               alt={image.prompt}
-              className="w-full h-64 object-cover"
+              className="w-full h-64"
             />
             <div className="p-4">
               <p className="text-gray-600 text-sm">{image.prompt}</p>

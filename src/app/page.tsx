@@ -1,33 +1,67 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import LatestImages from "./components/latest-images/latest-images";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import { User } from "@supabase/supabase-js";
+import { useUser } from "@/contexts/UserContext";
 
 export default function Home() {
+  const { user } = useUser();
   const [prompt, setPrompt] = useState("");
+  const [enhancedPrompt, setEnhancedPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const [generatedImage, setGeneratedImage] = useState("");
-  const [user, setUser] = useState<User | null>(null);
+  const [useEnhanced, setUseEnhanced] = useState(true);
   const router = useRouter();
 
+  const enhancePrompt = async (basePrompt: string) => {
+    setIsEnhancing(true);
+    try {
+      const improvements = [
+        "highly detailed",
+        "8k resolution",
+        "realistic lighting",
+        "professional photography",
+        "sharp focus",
+        "dramatic composition",
+        "cinematic",
+        "photorealistic",
+      ];
+
+      // Basic enhancement for common subjects
+      let enhanced = basePrompt;
+      if (basePrompt.toLowerCase().includes("portrait")) {
+        enhanced += ", professional headshot, studio lighting, bokeh background";
+      } else if (basePrompt.toLowerCase().includes("landscape")) {
+        enhanced += ", golden hour lighting, high dynamic range, atmospheric";
+      } else if (basePrompt.toLowerCase().includes("city")) {
+        enhanced += ", architectural photography, urban exploration, detailed facades";
+      }
+
+      // Add general quality improvements
+      enhanced += `, ${improvements.slice(0, 4).join(", ")}`;
+
+      setEnhancedPrompt(enhanced);
+    } catch (error) {
+      console.error("Error enhancing prompt:", error);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  // Enhance prompt when user stops typing
   useEffect(() => {
-    // Get initial user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
+    const timer = setTimeout(() => {
+      if (prompt) {
+        enhancePrompt(prompt);
+      }
+    }, 500);
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => clearTimeout(timer);
+  }, [prompt]);
 
   const generateImage = async () => {
     if (!user) {
@@ -36,10 +70,12 @@ export default function Home() {
       return;
     }
 
-    if (!prompt) {
+    if (!prompt.trim()) {
       toast.error("Please enter a prompt");
       return;
     }
+
+    const finalPrompt = useEnhanced && enhancedPrompt ? enhancedPrompt : prompt;
 
     setIsLoading(true);
     try {
@@ -48,7 +84,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt: finalPrompt }),
       });
 
       const data = await response.json();
@@ -62,7 +98,7 @@ export default function Home() {
       // Save to Supabase with user_id
       const { error } = await supabase.from("images").insert([
         {
-          prompt,
+          prompt: finalPrompt,
           image_url: data.imageUrl[0],
           user_id: user.id,
         },
@@ -79,57 +115,149 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <Toaster />
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h1 className="text-3xl font-bold text-center mb-8">
-            AI Image Generator
-          </h1>
+    <div className="min-h-screen bg-white">
+      <Toaster position="top-center" />
 
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="prompt"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Enter your prompt
-              </label>
-              <input
-                type="text"
-                id="prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                placeholder="Describe the image you want to generate..."
-              />
-            </div>
-
-            <button
-              onClick={generateImage}
-              disabled={isLoading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400"
-            >
-              {isLoading ? "Generating..." : "Generate Image"}
-            </button>
-
-            <button
-              onClick={() => router.push("/gallery")}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              View Gallery
-            </button>
-
-            {generatedImage && (
-              <div className="mt-4">
-                <img
-                  src={generatedImage}
-                  alt="Generated image"
-                  className="w-full rounded-lg shadow-lg"
-                />
-              </div>
-            )}
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white pt-16 pb-32">
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-medium tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+              Create stunning images
+              <span className="block text-2xl sm:text-3xl text-gray-500 mt-4 font-normal">
+                with the power of AI
+              </span>
+            </h1>
           </div>
+
+          {/* Latest Images */}
+          <div className="mt-16">
+            <h2 className="text-xl font-medium text-gray-900 mb-6">Latest Creations</h2>
+            <LatestImages />
+          </div>
+
+          {/* Main Creation Area */}
+          <div className="mt-24">
+            <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-8">
+              <div className="max-w-2xl mx-auto space-y-8">
+                {/* Prompt Input */}
+                <div>
+                  <label
+                    htmlFor="prompt"
+                    className="block text-base font-medium text-gray-900 mb-3"
+                  >
+                    What would you like to create?
+                  </label>
+                  <div className="space-y-3">
+                    <div className="relative flex flex-col gap-3">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          id="prompt"
+                          value={prompt}
+                          onChange={(e) => setPrompt(e.target.value)}
+                          className="block w-full px-4 py-3 pr-24 rounded-xl bg-gray-50 border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                          placeholder="A serene Japanese garden with cherry blossoms..."
+                        />
+                        <button
+                          onClick={generateImage}
+                          disabled={isLoading}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-300"
+                        >
+                          {isLoading ? (
+                            <div className="flex items-center space-x-2">
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span>Creating...</span>
+                            </div>
+                          ) : (
+                            "Create"
+                          )}
+                        </button>
+                      </div>
+
+                      {prompt && enhancedPrompt && (
+                        <div className="relative">
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-sm text-gray-500">Enhanced Prompt</label>
+                            <button
+                              onClick={() => setUseEnhanced(!useEnhanced)}
+                              className={`text-xs px-2 py-1 rounded-full transition-colors duration-200 ${useEnhanced
+                                ? 'bg-black text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                            >
+                              {useEnhanced ? 'Using Enhanced' : 'Use Original'}
+                            </button>
+                          </div>
+                          <div className="relative rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
+                            {isEnhancing ? (
+                              <div className="flex items-center justify-center py-2">
+                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                              </div>
+                            ) : (
+                              enhancedPrompt
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Example Prompts */}
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-sm text-gray-500">Try:</span>
+                    {[
+                      "A cyberpunk cityscape at sunset",
+                      "Watercolor painting of mountains",
+                      "Abstract geometric patterns",
+                    ].map((example) => (
+                      <button
+                        key={example}
+                        onClick={() => setPrompt(example)}
+                        className="text-sm text-gray-600 hover:text-black bg-gray-50 px-3 py-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Generated Image Display */}
+                  {generatedImage && (
+                    <div className="relative mt-8 group">
+                      <img
+                        src={generatedImage}
+                        alt="Generated image"
+                        className="w-full rounded-2xl shadow-lg"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-2xl flex items-center justify-center">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <button
+                            onClick={() => router.push("/gallery")}
+                            className="bg-white/90 backdrop-blur-sm text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-colors duration-200"
+                          >
+                            View in Gallery
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Gallery Link */}
+        <div className="text-center pb-16">
+          <button
+            onClick={() => router.push("/gallery")}
+            className="text-gray-600 hover:text-black transition-colors duration-200 flex items-center justify-center space-x-2 mx-auto"
+          >
+            <span>Browse Gallery</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

@@ -1,11 +1,8 @@
-import "./globals.css";
-import type { Metadata } from "next";
-import Navbar from "./components/navbar/navbar";
+"use client";
 
-export const metadata: Metadata = {
-  title: "AI Image Generator",
-  description: "Generate images using AI and Replicate API",
-};
+import "./globals.css";
+import { UserProvider } from "@/contexts/UserContext";
+import Navbar from "./components/navbar/navbar";
 
 export default function RootLayout({
   children,
@@ -14,9 +11,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gray-50">
-        <Navbar />
-        <main className="container mx-auto px-4 py-8">{children}</main>
+      <body>
+        <UserProvider>
+          <Navbar />
+          {children}
+        </UserProvider>
       </body>
     </html>
   );
