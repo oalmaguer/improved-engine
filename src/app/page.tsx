@@ -7,6 +7,66 @@ import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { useUser } from "@/contexts/UserContext";
 
+const styles = {
+  realistic: {
+    name: "Realistic",
+    prompt: "photorealistic, highly detailed, professional photography, 8k resolution, sharp focus",
+    icon: "📸"
+  },
+  anime: {
+    name: "Anime",
+    prompt: "anime style, Studio Ghibli, vibrant colors, cel shading, detailed anime illustration",
+    icon: "🎨"
+  },
+  medieval: {
+    name: "Medieval",
+    prompt: "medieval fantasy art, oil painting style, detailed fantasy illustration, dramatic lighting",
+    icon: "⚔️"
+  },
+  cyberpunk: {
+    name: "Cyberpunk",
+    prompt: "cyberpunk style, neon lights, futuristic, high tech, digital art, sci-fi concept art",
+    icon: "🌆"
+  },
+  watercolor: {
+    name: "Watercolor",
+    prompt: "watercolor painting, artistic, soft colors, flowing textures, traditional art style",
+    icon: "🎨"
+  },
+  cartoon: {
+    name: "Cartoon",
+    prompt: "cartoon style, bold colors, clean lines, stylized illustration, character design",
+    icon: "✏️"
+  },
+  retro: {
+    name: "Retro",
+    prompt: "retro style, vintage aesthetics, 80s design, synthwave, nostalgic colors",
+    icon: "📻"
+  },
+  minimalist: {
+    name: "Minimalist",
+    prompt: "minimalist style, clean design, simple shapes, limited color palette, modern art",
+    icon: "⬜"
+  },
+  pixel: {
+    name: "Pixel Art",
+    prompt: "pixel art style, 16-bit graphics, retro game aesthetic, pixelated details, video game art",
+    icon: "👾"
+  },
+  steampunk: {
+    name: "Steampunk",
+    prompt: "steampunk aesthetic, victorian sci-fi, brass and copper tones, mechanical details, steam-powered machinery",
+    icon: "⚙️"
+  },
+  abstract: {
+    name: "Abstract",
+    prompt: "abstract art, non-representational, geometric shapes, bold composition, modern abstract expressionism",
+    icon: "🎯"
+  }
+} as const;
+
+type StyleKey = keyof typeof styles;
+
 export default function Home() {
   const { user } = useUser();
   const [prompt, setPrompt] = useState("");
@@ -15,55 +75,37 @@ export default function Home() {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [generatedImage, setGeneratedImage] = useState("");
   const [useEnhanced, setUseEnhanced] = useState(true);
+  const [selectedStyles, setSelectedStyles] = useState<Set<StyleKey>>(new Set<StyleKey>());
   const router = useRouter();
 
   const enhancePrompt = async (basePrompt: string) => {
     setIsEnhancing(true);
-
     try {
-      const response = await fetch("/api/enhance-prompt", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt: basePrompt }),
-      });
-
-      const data = await response.json();
-
-      console.log(data.error);
-      if (data.error) {
-        throw new Error(data.error);
+      // Add style-specific enhancements if any styles are selected
+      let enhanced = basePrompt;
+      if (selectedStyles.size > 0) {
+        const stylePrompts = Array.from(selectedStyles).map(style => styles[style].prompt).join(", ");
+        enhanced += `, ${stylePrompts}`;
       }
-
-      console.log("Enhanced prompt:", data.enhancedPrompt);
-      setEnhancedPrompt(data.enhancedPrompt);
+      setEnhancedPrompt(enhanced);
     } catch (error) {
       console.error("Error enhancing prompt:", error);
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("Failed to enhance prompt. Please try again.");
-      }
+      toast.error("Failed to enhance prompt");
     } finally {
       setIsEnhancing(false);
     }
   };
 
-  const handleEnhanceClick = () => {
-    if (!user) {
-      toast.error("Please sign in to enhance prompts");
-      router.push("/auth");
-      return;
-    }
+  // Enhance prompt when user stops typing or changes style
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (prompt) {
+        enhancePrompt(prompt);
+      }
+    }, 500);
 
-    if (!prompt.trim()) {
-      toast.error("Please enter a prompt");
-      return;
-    }
-
-    enhancePrompt(prompt);
-  };
+    return () => clearTimeout(timer);
+  }, [prompt, selectedStyles]);
 
   const generateImage = async () => {
     if (!user) {
@@ -136,6 +178,36 @@ export default function Home() {
           <div className="mt-16">
             <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-8">
               <div className="max-w-2xl mx-auto space-y-8">
+                {/* Style Selector */}
+                <div>
+                  <label className="block text-base font-medium text-gray-900 mb-3">
+                    Choose Styles (Optional)
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {(Object.keys(styles) as StyleKey[]).map((key) => (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          const newStyles = new Set<StyleKey>(selectedStyles);
+                          if (newStyles.has(key)) {
+                            newStyles.delete(key);
+                          } else {
+                            newStyles.add(key);
+                          }
+                          setSelectedStyles(newStyles);
+                        }}
+                        className={`flex items-center justify-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${selectedStyles.has(key)
+                          ? "bg-black text-white ring-2 ring-black ring-offset-2"
+                          : "bg-gray-50 text-gray-900 hover:bg-gray-100"
+                          }`}
+                      >
+                        <span className="mr-2">{styles[key].icon}</span>
+                        {styles[key].name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Prompt Input */}
                 <div>
                   <label
@@ -146,7 +218,7 @@ export default function Home() {
                   </label>
                   <div className="space-y-3">
                     <div className="relative flex flex-col gap-3">
-                      <div className="relative mb-5">
+                      <div className="relative">
                         <input
                           type="text"
                           id="prompt"
@@ -155,76 +227,31 @@ export default function Home() {
                           className="block w-full px-4 py-3 pr-24 rounded-xl bg-gray-50 border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
                           placeholder="A serene Japanese garden with cherry blossoms..."
                         />
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2">
-                          <button
-                            onClick={handleEnhanceClick}
-                            disabled={isEnhancing}
-                            className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors duration-200 disabled:bg-gray-50 disabled:text-gray-400"
-                          >
-                            {isEnhancing ? (
-                              <div className="flex items-center space-x-2">
-                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                                <span>Enhancing...</span>
-                              </div>
-                            ) : (
-                              "Enhance"
-                            )}
-                          </button>
-                          <button
-                            onClick={generateImage}
-                            disabled={isLoading}
-                            className="px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-300"
-                          >
-                            {isLoading ? (
-                              <div className="flex items-center space-x-2">
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span>Creating...</span>
-                              </div>
-                            ) : (
-                              "Create"
-                            )}
-                          </button>
-                        </div>
+                        <button
+                          onClick={generateImage}
+                          disabled={isLoading}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-300"
+                        >
+                          {isLoading ? (
+                            <div className="flex items-center space-x-2">
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span>Creating...</span>
+                            </div>
+                          ) : (
+                            "Create"
+                          )}
+                        </button>
                       </div>
-
-                      {enhancedPrompt && (
-                        <div className="relative">
-                          <div className="flex items-center justify-between mb-2">
-                            <label className="text-sm text-gray-500">
-                              Enhanced Prompt
-                            </label>
-                            <button
-                              onClick={() => setUseEnhanced(!useEnhanced)}
-                              className={`text-xs px-2 py-1 rounded-full transition-colors duration-200 ${
-                                useEnhanced
-                                  ? "bg-black text-white"
-                                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                              }`}
-                            >
-                              {useEnhanced ? "Using Enhanced" : "Use Original"}
-                            </button>
-                          </div>
-                          <div className="relative rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
-                            {isEnhancing ? (
-                              <div className="flex items-center justify-center py-2">
-                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                              </div>
-                            ) : (
-                              enhancedPrompt
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
 
                   {/* Example Prompts */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 mt-4">
                     <span className="text-sm text-gray-500">Try:</span>
                     {[
-                      "A cyberpunk cityscape at sunset",
-                      "Watercolor painting of mountains",
-                      "Abstract geometric patterns",
+                      "A majestic dragon",
+                      "A cozy cafe interior",
+                      "A mystical forest",
                     ].map((example) => (
                       <button
                         key={example}
@@ -263,32 +290,20 @@ export default function Home() {
 
           {/* Latest Images */}
           <div className="mt-16">
-            <h2 className="text-xl font-medium text-gray-900 mb-6">
-              Latest Creations
-            </h2>
+            <h2 className="text-xl font-medium text-gray-900 mb-6">Latest Creations</h2>
             <LatestImages />
           </div>
         </div>
 
         {/* Bottom Gallery Link */}
-        <div className="text-center pb-16 mt-10">
+        <div className="text-center pb-16">
           <button
             onClick={() => router.push("/gallery")}
             className="text-gray-600 hover:text-black transition-colors duration-200 flex items-center justify-center space-x-2 mx-auto"
           >
             <span>Browse Gallery</span>
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import ImageLightbox from "../components/image-lightbox/image-lightbox";
 import { useUser } from "@/contexts/UserContext";
+import CopyPromptButton from "../components/copy-prompt-button/copy-prompt-button";
 
 interface Image {
   id: number;
@@ -81,9 +82,17 @@ export default function Gallery() {
                     className="w-full aspect-square"
                   />
                   <div className="p-6">
-                    <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Prompt</p>
-                    <p className="text-gray-900 line-clamp-2 text-sm">{image.prompt}</p>
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                    <div className="flex justify-between items-start gap-4 mb-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Prompt</p>
+                        <p className="text-gray-900 line-clamp-2 text-sm">{image.prompt}</p>
+                      </div>
+                      <CopyPromptButton
+                        prompt={image.prompt}
+                        className="text-gray-400 hover:text-gray-900 shrink-0"
+                      />
+                    </div>
+                    <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
                       <Link
                         href={`/user/${image.user_id}`}
                         className="flex items-center group/profile"

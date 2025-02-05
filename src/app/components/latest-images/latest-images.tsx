@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import CopyPromptButton from "../copy-prompt-button/copy-prompt-button";
 import ImageLightbox from "../image-lightbox/image-lightbox";
 
 interface Image {
@@ -140,7 +141,13 @@ export default function LatestImages() {
             {/* Hover Overlay */}
             <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-75 transition-all duration-200">
               <div className="absolute inset-0 p-4 text-white opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between">
-                <p className="text-sm line-clamp-3">{image.prompt}</p>
+                <div className="flex justify-between items-start gap-4">
+                  <p className="text-sm line-clamp-3">{image.prompt}</p>
+                  <CopyPromptButton
+                    prompt={image.prompt}
+                    className="text-white/75 hover:text-white shrink-0"
+                  />
+                </div>
 
                 <Link
                   href={`/user/${image.user_id}`}
