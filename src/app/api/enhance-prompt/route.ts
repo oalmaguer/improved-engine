@@ -6,8 +6,10 @@ const openai = new OpenAI({
 });
 
 export async function POST(request: Request) {
+  console.log("OpenAI API Key:", process.env.OPENAI_API_KEY);
   try {
     const { prompt } = await request.json();
+    console.log("Prompt:", prompt);
 
     if (!prompt) {
       return NextResponse.json(

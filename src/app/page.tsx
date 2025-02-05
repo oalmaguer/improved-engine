@@ -19,6 +19,7 @@ export default function Home() {
 
   const enhancePrompt = async (basePrompt: string) => {
     setIsEnhancing(true);
+
     try {
       const response = await fetch("/api/enhance-prompt", {
         method: "POST",
@@ -30,6 +31,7 @@ export default function Home() {
 
       const data = await response.json();
 
+      console.log(data.error);
       if (data.error) {
         throw new Error(data.error);
       }
