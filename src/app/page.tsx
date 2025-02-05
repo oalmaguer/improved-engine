@@ -20,48 +20,44 @@ export default function Home() {
   const enhancePrompt = async (basePrompt: string) => {
     setIsEnhancing(true);
     try {
-      const improvements = [
-        "highly detailed",
-        "8k resolution",
-        "realistic lighting",
-        "professional photography",
-        "sharp focus",
-        "dramatic composition",
-        "cinematic",
-        "photorealistic",
-      ];
+      const response = await fetch("/api/enhance-prompt", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt: basePrompt }),
+      });
 
-      // Basic enhancement for common subjects
-      let enhanced = basePrompt;
-      if (basePrompt.toLowerCase().includes("portrait")) {
-        enhanced += ", professional headshot, studio lighting, bokeh background";
-      } else if (basePrompt.toLowerCase().includes("landscape")) {
-        enhanced += ", golden hour lighting, high dynamic range, atmospheric";
-      } else if (basePrompt.toLowerCase().includes("city")) {
-        enhanced += ", architectural photography, urban exploration, detailed facades";
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
       }
 
-      // Add general quality improvements
-      enhanced += `, ${improvements.slice(0, 4).join(", ")}`;
-
-      setEnhancedPrompt(enhanced);
+      console.log("Enhanced prompt:", data.enhancedPrompt);
+      setEnhancedPrompt(data.enhancedPrompt);
     } catch (error) {
       console.error("Error enhancing prompt:", error);
+      toast.error("Failed to enhance prompt");
     } finally {
       setIsEnhancing(false);
     }
   };
 
-  // Enhance prompt when user stops typing
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (prompt) {
-        enhancePrompt(prompt);
-      }
-    }, 500);
+  const handleEnhanceClick = () => {
+    if (!user) {
+      toast.error("Please sign in to enhance prompts");
+      router.push("/auth");
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [prompt]);
+    if (!prompt.trim()) {
+      toast.error("Please enter a prompt");
+      return;
+    }
+
+    enhancePrompt(prompt);
+  };
 
   const generateImage = async () => {
     if (!user) {
@@ -130,14 +126,8 @@ export default function Home() {
             </h1>
           </div>
 
-          {/* Latest Images */}
-          <div className="mt-16">
-            <h2 className="text-xl font-medium text-gray-900 mb-6">Latest Creations</h2>
-            <LatestImages />
-          </div>
-
           {/* Main Creation Area */}
-          <div className="mt-24">
+          <div className="mt-16">
             <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-8">
               <div className="max-w-2xl mx-auto space-y-8">
                 {/* Prompt Input */}
@@ -150,7 +140,7 @@ export default function Home() {
                   </label>
                   <div className="space-y-3">
                     <div className="relative flex flex-col gap-3">
-                      <div className="relative">
+                      <div className="relative mb-5">
                         <input
                           type="text"
                           id="prompt"
@@ -159,34 +149,53 @@ export default function Home() {
                           className="block w-full px-4 py-3 pr-24 rounded-xl bg-gray-50 border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
                           placeholder="A serene Japanese garden with cherry blossoms..."
                         />
-                        <button
-                          onClick={generateImage}
-                          disabled={isLoading}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-300"
-                        >
-                          {isLoading ? (
-                            <div className="flex items-center space-x-2">
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              <span>Creating...</span>
-                            </div>
-                          ) : (
-                            "Create"
-                          )}
-                        </button>
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2">
+                          <button
+                            onClick={handleEnhanceClick}
+                            disabled={isEnhancing}
+                            className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors duration-200 disabled:bg-gray-50 disabled:text-gray-400"
+                          >
+                            {isEnhancing ? (
+                              <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                                <span>Enhancing...</span>
+                              </div>
+                            ) : (
+                              "Enhance"
+                            )}
+                          </button>
+                          <button
+                            onClick={generateImage}
+                            disabled={isLoading}
+                            className="px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-300"
+                          >
+                            {isLoading ? (
+                              <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Creating...</span>
+                              </div>
+                            ) : (
+                              "Create"
+                            )}
+                          </button>
+                        </div>
                       </div>
 
-                      {prompt && enhancedPrompt && (
+                      {enhancedPrompt && (
                         <div className="relative">
                           <div className="flex items-center justify-between mb-2">
-                            <label className="text-sm text-gray-500">Enhanced Prompt</label>
+                            <label className="text-sm text-gray-500">
+                              Enhanced Prompt
+                            </label>
                             <button
                               onClick={() => setUseEnhanced(!useEnhanced)}
-                              className={`text-xs px-2 py-1 rounded-full transition-colors duration-200 ${useEnhanced
-                                ? 'bg-black text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
+                              className={`text-xs px-2 py-1 rounded-full transition-colors duration-200 ${
+                                useEnhanced
+                                  ? "bg-black text-white"
+                                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                              }`}
                             >
-                              {useEnhanced ? 'Using Enhanced' : 'Use Original'}
+                              {useEnhanced ? "Using Enhanced" : "Use Original"}
                             </button>
                           </div>
                           <div className="relative rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
@@ -245,17 +254,35 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* Latest Images */}
+          <div className="mt-16">
+            <h2 className="text-xl font-medium text-gray-900 mb-6">
+              Latest Creations
+            </h2>
+            <LatestImages />
+          </div>
         </div>
 
         {/* Bottom Gallery Link */}
-        <div className="text-center pb-16">
+        <div className="text-center pb-16 mt-10">
           <button
             onClick={() => router.push("/gallery")}
             className="text-gray-600 hover:text-black transition-colors duration-200 flex items-center justify-center space-x-2 mx-auto"
           >
             <span>Browse Gallery</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>
