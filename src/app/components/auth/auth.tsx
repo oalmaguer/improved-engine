@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Auth() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,16 +22,21 @@ export default function Auth() {
           password,
         });
         if (error) throw error;
-        alert("Check your email for the confirmation link!");
+        toast.success("Check your email for the confirmation link!");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
+        toast.success("Successfully signed in!");
+        // Add a small delay before redirecting to show the success message
+        setTimeout(() => {
+          router.push("/");
+        }, 1000);
       }
     } catch (error: any) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEmail("");
@@ -38,6 +46,7 @@ export default function Auth() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh]">
+      <Toaster position="top-center" />
       <div className="w-full max-w-sm p-6 bg-white rounded-lg shadow-md">
         <h2 className="mb-6 text-2xl font-bold text-center">
           {isSignUp ? "Sign Up" : "Sign In"}
