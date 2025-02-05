@@ -2,19 +2,25 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY?.trim(),
+  baseURL: "https://api.openai.com/v1",
 });
 
 export async function POST(request: Request) {
-  console.log("OpenAI API Key:", process.env.OPENAI_API_KEY);
   try {
     const { prompt } = await request.json();
-    console.log("Prompt:", prompt);
 
-    if (!prompt) {
+    if (!prompt?.trim()) {
       return NextResponse.json(
         { error: "Prompt is required" },
         { status: 400 }
+      );
+    }
+
+    if (!process.env.OPENAI_API_KEY?.trim()) {
+      return NextResponse.json(
+        { error: "OpenAI API key is not configured" },
+        { status: 500 }
       );
     }
 
@@ -47,9 +53,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ enhancedPrompt });
   } catch (error) {
     console.error("Error enhancing prompt:", error);
-    return NextResponse.json(
-      { error: "Failed to enhance prompt" },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to enhance prompt";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

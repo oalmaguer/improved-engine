@@ -40,7 +40,11 @@ export default function Home() {
       setEnhancedPrompt(data.enhancedPrompt);
     } catch (error) {
       console.error("Error enhancing prompt:", error);
-      toast.error("Failed to enhance prompt");
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to enhance prompt. Please try again.");
+      }
     } finally {
       setIsEnhancing(false);
     }
