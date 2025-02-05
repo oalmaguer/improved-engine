@@ -12,6 +12,7 @@ interface Image {
   image_url: string;
   created_at: string;
   user_id: string;
+  categories: string[];
   profiles: {
     id: string;
     email: string;
@@ -141,12 +142,26 @@ export default function LatestImages() {
             {/* Hover Overlay */}
             <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-75 transition-all duration-200">
               <div className="absolute inset-0 p-4 text-white opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between">
-                <div className="flex justify-between items-start gap-4">
-                  <p className="text-sm line-clamp-3">{image.prompt}</p>
-                  <CopyPromptButton
-                    prompt={image.prompt}
-                    className="text-white/75 hover:text-white shrink-0"
-                  />
+                <div className="space-y-2">
+                  <div className="flex justify-between items-start gap-4">
+                    <p className="text-sm line-clamp-3">{image.prompt}</p>
+                    <CopyPromptButton
+                      prompt={image.prompt}
+                      className="text-white/75 hover:text-white shrink-0"
+                    />
+                  </div>
+                  {image.categories && image.categories.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {image.categories.map((category, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white/20 text-white"
+                        >
+                          {category}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <Link

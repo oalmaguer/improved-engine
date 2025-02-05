@@ -10,59 +10,70 @@ import { useUser } from "@/contexts/UserContext";
 const styles = {
   realistic: {
     name: "Realistic",
-    prompt: "photorealistic, highly detailed, professional photography, 8k resolution, sharp focus",
-    icon: "📸"
+    prompt:
+      "photorealistic, highly detailed, professional photography, 8k resolution, sharp focus",
+    icon: "📸",
   },
   anime: {
     name: "Anime",
-    prompt: "anime style, Studio Ghibli, vibrant colors, cel shading, detailed anime illustration",
-    icon: "🎨"
+    prompt:
+      "anime style, Studio Ghibli, vibrant colors, cel shading, detailed anime illustration",
+    icon: "🎨",
   },
   medieval: {
     name: "Medieval",
-    prompt: "medieval fantasy art, oil painting style, detailed fantasy illustration, dramatic lighting",
-    icon: "⚔️"
+    prompt:
+      "medieval fantasy art, oil painting style, detailed fantasy illustration, dramatic lighting",
+    icon: "⚔️",
   },
   cyberpunk: {
     name: "Cyberpunk",
-    prompt: "cyberpunk style, neon lights, futuristic, high tech, digital art, sci-fi concept art",
-    icon: "🌆"
+    prompt:
+      "cyberpunk style, neon lights, futuristic, high tech, digital art, sci-fi concept art",
+    icon: "🌆",
   },
   watercolor: {
     name: "Watercolor",
-    prompt: "watercolor painting, artistic, soft colors, flowing textures, traditional art style",
-    icon: "🎨"
+    prompt:
+      "watercolor painting, artistic, soft colors, flowing textures, traditional art style",
+    icon: "🎨",
   },
   cartoon: {
     name: "Cartoon",
-    prompt: "cartoon style, bold colors, clean lines, stylized illustration, character design",
-    icon: "✏️"
+    prompt:
+      "cartoon style, bold colors, clean lines, stylized illustration, character design",
+    icon: "✏️",
   },
   retro: {
     name: "Retro",
-    prompt: "retro style, vintage aesthetics, 80s design, synthwave, nostalgic colors",
-    icon: "📻"
+    prompt:
+      "retro style, vintage aesthetics, 80s design, synthwave, nostalgic colors",
+    icon: "📻",
   },
   minimalist: {
     name: "Minimalist",
-    prompt: "minimalist style, clean design, simple shapes, limited color palette, modern art",
-    icon: "⬜"
+    prompt:
+      "minimalist style, clean design, simple shapes, limited color palette, modern art",
+    icon: "⬜",
   },
   pixel: {
     name: "Pixel Art",
-    prompt: "pixel art style, 16-bit graphics, retro game aesthetic, pixelated details, video game art",
-    icon: "👾"
+    prompt:
+      "pixel art style, 16-bit graphics, retro game aesthetic, pixelated details, video game art",
+    icon: "👾",
   },
   steampunk: {
     name: "Steampunk",
-    prompt: "steampunk aesthetic, victorian sci-fi, brass and copper tones, mechanical details, steam-powered machinery",
-    icon: "⚙️"
+    prompt:
+      "steampunk aesthetic, victorian sci-fi, brass and copper tones, mechanical details, steam-powered machinery",
+    icon: "⚙️",
   },
   abstract: {
     name: "Abstract",
-    prompt: "abstract art, non-representational, geometric shapes, bold composition, modern abstract expressionism",
-    icon: "🎯"
-  }
+    prompt:
+      "abstract art, non-representational, geometric shapes, bold composition, modern abstract expressionism",
+    icon: "🎯",
+  },
 } as const;
 
 type StyleKey = keyof typeof styles;
@@ -75,7 +86,9 @@ export default function Home() {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [generatedImage, setGeneratedImage] = useState("");
   const [useEnhanced, setUseEnhanced] = useState(true);
-  const [selectedStyles, setSelectedStyles] = useState<Set<StyleKey>>(new Set<StyleKey>());
+  const [selectedStyles, setSelectedStyles] = useState<Set<StyleKey>>(
+    new Set<StyleKey>()
+  );
   const router = useRouter();
 
   const enhancePrompt = async (basePrompt: string) => {
@@ -84,7 +97,9 @@ export default function Home() {
       // Add style-specific enhancements if any styles are selected
       let enhanced = basePrompt;
       if (selectedStyles.size > 0) {
-        const stylePrompts = Array.from(selectedStyles).map(style => styles[style].prompt).join(", ");
+        const stylePrompts = Array.from(selectedStyles)
+          .map((style) => styles[style].prompt)
+          .join(", ");
         enhanced += `, ${stylePrompts}`;
       }
       setEnhancedPrompt(enhanced);
@@ -145,6 +160,9 @@ export default function Home() {
           prompt: finalPrompt,
           image_url: data.imageUrl[0],
           user_id: user.id,
+          categories: Array.from(selectedStyles).map(
+            (style) => styles[style].name
+          ),
         },
       ]);
 
@@ -196,10 +214,11 @@ export default function Home() {
                           }
                           setSelectedStyles(newStyles);
                         }}
-                        className={`flex items-center justify-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${selectedStyles.has(key)
-                          ? "bg-black text-white ring-2 ring-black ring-offset-2"
-                          : "bg-gray-50 text-gray-900 hover:bg-gray-100"
-                          }`}
+                        className={`flex items-center justify-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                          selectedStyles.has(key)
+                            ? "bg-black text-white ring-2 ring-black ring-offset-2"
+                            : "bg-gray-50 text-gray-900 hover:bg-gray-100"
+                        }`}
                       >
                         <span className="mr-2">{styles[key].icon}</span>
                         {styles[key].name}
@@ -290,7 +309,9 @@ export default function Home() {
 
           {/* Latest Images */}
           <div className="mt-16">
-            <h2 className="text-xl font-medium text-gray-900 mb-6">Latest Creations</h2>
+            <h2 className="text-xl font-medium text-gray-900 mb-6">
+              Latest Creations
+            </h2>
             <LatestImages />
           </div>
         </div>
@@ -302,8 +323,18 @@ export default function Home() {
             className="text-gray-600 hover:text-black transition-colors duration-200 flex items-center justify-center space-x-2 mx-auto"
           >
             <span>Browse Gallery</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>

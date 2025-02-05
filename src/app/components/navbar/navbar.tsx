@@ -26,7 +26,9 @@ export default function Navbar() {
               <div className="flex items-center">
                 <span className="text-black">Dream</span>
                 <span className="text-gray-900">Canvas</span>
-                <span className="text-xs ml-1 text-gray-500 font-normal">AI</span>
+                <span className="text-xs ml-1 text-gray-500 font-normal">
+                  AI
+                </span>
                 {user && profile?.avatar_url && (
                   <div className="ml-3 h-6 w-6 rounded-full overflow-hidden">
                     <img
@@ -44,6 +46,12 @@ export default function Navbar() {
                 className="text-sm text-gray-600 hover:text-black transition-colors duration-200"
               >
                 Create
+              </Link>
+              <Link
+                href="/image-to-image"
+                className="text-sm text-gray-600 hover:text-black transition-colors duration-200"
+              >
+                Transform Image
               </Link>
               <Link
                 href="/gallery"
@@ -116,8 +124,9 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       <div
-        className={`${isMenuOpen ? "block" : "hidden"
-          } md:hidden absolute top-16 inset-x-0 bg-white shadow-lg border-t border-gray-100`}
+        className={`${
+          isMenuOpen ? "block" : "hidden"
+        } md:hidden absolute top-16 inset-x-0 bg-white shadow-lg border-t border-gray-100`}
       >
         <div className="px-4 py-3 space-y-1">
           <Link
@@ -126,6 +135,13 @@ export default function Navbar() {
             onClick={() => setIsMenuOpen(false)}
           >
             Create
+          </Link>
+          <Link
+            href="/image-to-image"
+            className="block px-3 py-2.5 text-sm text-gray-600 hover:text-black hover:bg-gray-50 rounded-lg transition-colors duration-200"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Transform Image
           </Link>
           <Link
             href="/gallery"
