@@ -4,22 +4,25 @@ export async function POST(request: Request) {
   try {
     const { prompt } = await request.json();
 
-    const response = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions", {
+    const response = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions", {
       method: "POST",
       headers: {
         Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        input: { prompt,
-                 "go_fast": true,
-      "megapixels": "1",
-      "num_outputs": 1,
-      "aspect_ratio": "1:1",
-      "output_format": "webp",
-      "output_quality": 80,
-      "num_inference_steps": 4
-            },
+        input: {
+          prompt,
+          go_fast: true,
+          guidance: 3.3,
+          megapixels: "1",
+          num_outputs: 1,
+          aspect_ratio: "1:1",
+          output_format: "webp",
+          output_quality: 80,
+          prompt_strength: 0.8,
+          num_inference_steps: 28,
+        },
       }),
     });
 
@@ -28,7 +31,7 @@ export async function POST(request: Request) {
     }
 
     let prediction = await response.json();
-    
+
     // Poll for the result
     while (
       prediction.status !== "succeeded" &&

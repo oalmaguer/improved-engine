@@ -91,24 +91,10 @@ export default function Home() {
   );
   const router = useRouter();
 
-  const enhancePrompt = async (basePrompt: string) => {
-    setIsEnhancing(true);
-    try {
-      // Add style-specific enhancements if any styles are selected
-      let enhanced = basePrompt;
-      if (selectedStyles.size > 0) {
-        const stylePrompts = Array.from(selectedStyles)
-          .map((style) => styles[style].prompt)
-          .join(", ");
-        enhanced += `, ${stylePrompts}`;
-      }
-      setEnhancedPrompt(enhanced);
-    } catch (error) {
-      console.error("Error enhancing prompt:", error);
-      toast.error("Failed to enhance prompt");
-    } finally {
-      setIsEnhancing(false);
-    }
+  const enhancePrompt = async (generatedImage: string) => {
+    //download image
+    // setIsEnhancing(true);
+    // window.open(generatedImage, "_blank");
   };
 
   // Enhance prompt when user stops typing or changes style
@@ -177,14 +163,14 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen  bg-gradient-to-b from-dark-900 to-dark-950 text-white">
       <Toaster position="top-center" />
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white pt-16 pb-32">
+      <div className="relative overflow-hidden  pt-16 pb-32">
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl font-medium tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+            <h1 className="text-4xl font-medium tracking-tight  sm:text-5xl lg:text-6xl">
               Create stunning images
               <span className="block text-2xl sm:text-3xl text-gray-500 mt-4 font-normal">
                 with the power of AI
@@ -194,11 +180,11 @@ export default function Home() {
 
           {/* Main Creation Area */}
           <div className="mt-16">
-            <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-8">
+            <div className="border border-primary-500/10 p-8 bg-dark-800/50 backdrop-blur-sm rounded-3xl rounded-2xl shadow-sm ring-1 ring-gray-100 p-8">
               <div className="max-w-2xl mx-auto space-y-8">
                 {/* Style Selector */}
                 <div>
-                  <label className="block text-base font-medium text-gray-900 mb-3">
+                  <label className="block text-base font-medium  mb-3">
                     Choose Styles (Optional)
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -214,11 +200,10 @@ export default function Home() {
                           }
                           setSelectedStyles(newStyles);
                         }}
-                        className={`flex items-center justify-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                          selectedStyles.has(key)
-                            ? "bg-black text-white ring-2 ring-black ring-offset-2"
-                            : "bg-gray-50 text-gray-900 hover:bg-gray-100"
-                        }`}
+                        className={`flex items-center justify-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${selectedStyles.has(key)
+                          ? "bg-black text-white ring-2 ring-black ring-offset-2"
+                          : "bg-gray-50 text-gray-900 hover:bg-gray-100"
+                          }`}
                       >
                         <span className="mr-2">{styles[key].icon}</span>
                         {styles[key].name}
@@ -231,7 +216,7 @@ export default function Home() {
                 <div>
                   <label
                     htmlFor="prompt"
-                    className="block text-base font-medium text-gray-900 mb-3"
+                    className="block text-base font-medium  mb-3"
                   >
                     What would you like to create?
                   </label>
@@ -292,12 +277,20 @@ export default function Home() {
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-2xl flex items-center justify-center">
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <button
-                            onClick={() => router.push("/gallery")}
-                            className="bg-white/90 backdrop-blur-sm text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-colors duration-200"
-                          >
-                            View in Gallery
-                          </button>
+                          <div className="flex space-x-4">
+                            <button
+                              onClick={() => window.location.href = '/'}
+                              className="px-6 py-2.5 bg-black text-white rounded-full hover:bg-gray-900 transition-colors duration-200 text-sm font-medium"
+                            >
+                              Create New
+                            </button>
+                            <button
+                              onClick={() => enhancePrompt(generatedImage)}
+                              className="px-6 py-2.5 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
+                            >
+                              Download
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -317,10 +310,10 @@ export default function Home() {
         </div>
 
         {/* Bottom Gallery Link */}
-        <div className="text-center pb-16">
+        <div className="text-center pb-16 mt-10">
           <button
             onClick={() => router.push("/gallery")}
-            className="text-gray-600 hover:text-black transition-colors duration-200 flex items-center justify-center space-x-2 mx-auto"
+            className=" hover:text-black transition-colors duration-200 flex items-center justify-center space-x-2 mx-auto"
           >
             <span>Browse Gallery</span>
             <svg

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import CopyPromptButton from "../copy-prompt-button/copy-prompt-button";
 import ImageLightbox from "../image-lightbox/image-lightbox";
+import LikeButton from "../like-button/like-button";
 
 interface Image {
   id: number;
@@ -13,6 +14,7 @@ interface Image {
   created_at: string;
   user_id: string;
   categories: string[];
+  number_of_likes: number;
   profiles: {
     id: string;
     email: string;
@@ -145,10 +147,7 @@ export default function LatestImages() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-start gap-4">
                     <p className="text-sm line-clamp-3">{image.prompt}</p>
-                    <CopyPromptButton
-                      prompt={image.prompt}
-                      className="text-white/75 hover:text-white shrink-0"
-                    />
+                    <LikeButton imageId={image.id} initialLikes={image.number_of_likes || 0} />
                   </div>
                   {image.categories && image.categories.length > 0 && (
                     <div className="flex flex-wrap gap-1">
@@ -164,42 +163,48 @@ export default function LatestImages() {
                   )}
                 </div>
 
-                <Link
-                  href={`/user/${image.user_id}`}
-                  className="flex items-center space-x-3 group/profile"
-                >
-                  <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 ring-1 ring-transparent group-hover/profile:ring-white transition-all duration-200">
-                    {image.profiles.avatar_url ? (
-                      <img
-                        src={image.profiles.avatar_url}
-                        alt={image.profiles.full_name || "User avatar"}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center bg-gray-800">
-                        <span className="text-sm text-white font-medium">
-                          {image.profiles?.full_name?.charAt(0).toUpperCase() ||
-                            image.profiles?.email?.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white group-hover/profile:text-white/90 transition-colors duration-200">
-                      {image.profiles?.full_name ||
-                        image.profiles?.email?.split("@")[0]}
-                    </p>
-                    <p className="text-xs text-gray-300">
-                      {new Date(image.created_at).toLocaleDateString(
-                        undefined,
-                        {
-                          month: "short",
-                          day: "numeric",
-                        }
+                <div className="flex justify-between items-end">
+                  <Link
+                    href={`/user/${image.user_id}`}
+                    className="flex items-center space-x-3 group/profile"
+                  >
+                    <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 ring-1 ring-transparent group-hover/profile:ring-white transition-all duration-200">
+                      {image.profiles.avatar_url ? (
+                        <img
+                          src={image.profiles.avatar_url}
+                          alt={image.profiles.full_name || "User avatar"}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center bg-gray-800">
+                          <span className="text-sm text-white font-medium">
+                            {image.profiles?.full_name?.charAt(0).toUpperCase() ||
+                              image.profiles?.email?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
                       )}
-                    </p>
-                  </div>
-                </Link>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white group-hover/profile:text-white/90 transition-colors duration-200">
+                        {image.profiles?.full_name ||
+                          image.profiles?.email?.split("@")[0]}
+                      </p>
+                      <p className="text-xs text-gray-300">
+                        {new Date(image.created_at).toLocaleDateString(
+                          undefined,
+                          {
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  </Link>
+                  <CopyPromptButton
+                    prompt={image.prompt}
+                    className="text-white/70 hover:text-white shrink-0"
+                  />
+                </div>
               </div>
             </div>
           </div>

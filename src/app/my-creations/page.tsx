@@ -5,13 +5,14 @@ import { getCurrentUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import ImageLightbox from "../components/image-lightbox/image-lightbox";
 import CopyPromptButton from "../components/copy-prompt-button/copy-prompt-button";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 
 interface Image {
   id: number;
   prompt: string;
   image_url: string;
   created_at: string;
+  number_of_likes: number;
   categories: string[];
   profiles: {
     email: string;
@@ -21,6 +22,41 @@ interface Image {
 export default function MyCreations() {
   const [images, setImages] = useState<Image[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleLike = async (imageId: number) => {
+    try {
+      // Fetch current number_of_likes
+      const { data: currentData, error: currentError } = await supabase
+        .from('images')
+        .select('number_of_likes')
+        .eq('id', imageId)
+        .single();
+
+      if (currentError) throw currentError;
+
+      const currentLikes = currentData.number_of_likes;
+
+      // Update number_of_likes by incrementing
+      const { data, error } = await supabase
+        .from('images')
+        .update({ number_of_likes: currentLikes + 1 })
+        .eq('id', imageId);
+
+      if (error) throw error;
+
+      // Update local state
+      setImages(prevImages =>
+        prevImages.map(image =>
+          image.id === imageId
+            ? { ...image, number_of_likes: image.number_of_likes + 1 }
+            : image
+        )
+      );
+    } catch (error) {
+      console.error('Error liking image:', error);
+      toast.error('Failed to like image');
+    }
+  };
 
   useEffect(() => {
     async function loadUserImages() {
@@ -47,75 +83,58 @@ export default function MyCreations() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen  py-16 px-4 sm:px-6 lg:px-8">
       <Toaster position="top-center" />
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-4xl font-medium text-gray-900">My Creations</h1>
-            <p className="mt-2 text-lg text-gray-500">
-              Your AI-generated masterpieces
-            </p>
-          </div>
-          <button
-            onClick={() => (window.location.href = "/")}
-            className="px-6 py-2.5 bg-pink-500/10 text-pink-700 rounded-full hover:bg-pink-500/20 transition-colors duration-200 text-sm font-medium"
-          >
-            Create New
-          </button>
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-medium text-primary-100 mb-4">My Creations</h1>
+          <p className="text-lg text-primary-300/70">
+            View and manage your generated images
+          </p>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="w-8 h-8 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : images.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 bg-white/50 backdrop-blur-sm rounded-3xl border border-pink-100">
-            <div className="w-20 h-20 mb-6 text-pink-200">
-              <svg fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 14h-2v-2h2v2zm0-4h-2V7h2v6z" />
-              </svg>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {loading ? (
+            <div className="col-span-full flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
             </div>
-            <h2 className="text-xl font-medium text-gray-900 mb-2">
-              No creations yet
-            </h2>
-            <p className="text-gray-500 mb-8">
-              Start creating amazing AI-generated images
-            </p>
-            <button
-              onClick={() => (window.location.href = "/")}
-              className="px-6 py-2.5 bg-black text-white rounded-full hover:bg-gray-900 transition-colors duration-200 text-sm font-medium"
-            >
-              Create Your First Image
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {images.map((image) => (
-              <div
-                key={image.id}
-                className="group relative bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg"
-              >
-                <div className="aspect-square">
+          ) : (
+            images.map((image) => (
+              <div key={image.id} className="bg-dark-800/50 backdrop-blur-sm rounded-3xl border border-primary-500/10 overflow-hidden">
+                <div className="aspect-square relative">
                   <ImageLightbox
-                    src={image.image_url}
-                    alt={image.prompt}
-                    className="w-full h-full"
+                    src={
+                      image.image_url.startsWith("http")
+                        ? image.image_url
+                        : `/images/${image.image_url}`
+                    }
+                    alt={'Image' + image.id}
+                    className="object-cover w-full h-full"
                   />
+                  <div className="absolute top-4 right-4 z-10">
+                    <button
+                      onClick={() => handleLike(image.id)}
+                      className="flex items-center space-x-1 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-white hover:bg-black/40 transition-colors duration-200"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                      </svg>
+                      <span className="text-sm">{image.number_of_likes}</span>
+                    </button>
+                  </div>
                 </div>
                 <div className="p-6">
-                  <div className="flex justify-between items-start gap-4 mb-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-pink-500/70 mb-2">
-                        Prompt
-                      </p>
-                      <p className="text-gray-900 line-clamp-2 text-sm">
-                        {image.prompt}
-                      </p>
-                    </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm text-primary-300/70">
+                      {new Date(image.created_at).toLocaleDateString()}
+                    </p>
                     <CopyPromptButton
                       prompt={image.prompt}
-                      className="text-gray-400 hover:text-gray-900 shrink-0"
+                      className="text-primary-400/70 hover:text-primary-300 shrink-0"
                     />
                   </div>
                   {image.categories && image.categories.length > 0 && (
@@ -123,38 +142,31 @@ export default function MyCreations() {
                       {image.categories.map((category, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-50 text-pink-700"
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-500/10 text-primary-300 border border-primary-500/20"
                         >
                           {category}
                         </span>
                       ))}
                     </div>
                   )}
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-                    <p className="text-xs text-gray-400">
-                      {new Date(image.created_at).toLocaleDateString(
-                        undefined,
-                        {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        }
-                      )}
+                  <div className="mt-4 pt-4 border-t border-primary-500/10 flex justify-between items-center">
+                    <p className="text-xs text-primary-300/50">
+                      {new Date(image.created_at).toLocaleDateString()}
                     </p>
                     <button
                       onClick={() => {
                         /* Add delete functionality */
                       }}
-                      className="text-xs text-pink-600 hover:text-pink-700 transition-colors duration-200"
+                      className="text-xs text-primary-400 hover:text-primary-300 transition-colors duration-200"
                     >
                       Delete
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
