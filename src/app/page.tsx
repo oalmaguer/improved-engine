@@ -180,7 +180,7 @@ export default function Home() {
 
           {/* Main Creation Area */}
           <div className="mt-16">
-            <div className="border border-primary-500/10 p-8 bg-dark-800/50 backdrop-blur-sm rounded-3xl rounded-2xl shadow-sm ring-1 ring-gray-100 p-8">
+            <div className="border border-primary-500/10 p-8 bg-dark-800/50 backdrop-blur-sm rounded-3xl rounded-2xl shadow-sm  p-8">
               <div className="max-w-2xl mx-auto space-y-8">
                 {/* Style Selector */}
                 <div>

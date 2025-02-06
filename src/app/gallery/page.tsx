@@ -1,20 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import ImageLightbox from "../components/image-lightbox/image-lightbox";
-import { useUser } from "@/contexts/UserContext";
 import CopyPromptButton from "../components/copy-prompt-button/copy-prompt-button";
-import Image from "next/image";
 import LikeButton from "../components/like-button/like-button";
+import ImageLightbox from "../components/image-lightbox/image-lightbox";
+import { Toaster } from "react-hot-toast";
 
 interface Image {
   id: number;
   prompt: string;
   image_url: string;
   created_at: string;
-  user_id: string;
+  number_of_likes: number;
   categories: string[];
   profiles: {
     id: string;
@@ -22,11 +21,9 @@ interface Image {
     full_name: string | null;
     avatar_url: string | null;
   };
-  number_of_likes: number;
 }
 
 export default function Gallery() {
-  const { user } = useUser();
   const [images, setImages] = useState<Image[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,17 +32,15 @@ export default function Gallery() {
       try {
         const { data, error } = await supabase
           .from("images")
-          .select(
-            `
+          .select(`
             *,
-            profiles:user_id (
+            profiles (
               id,
               email,
               full_name,
               avatar_url
             )
-          `
-          )
+          `)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -61,58 +56,88 @@ export default function Gallery() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-dark-900 to-dark-950 py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-dark-900 to-dark-950">
+      <Toaster position="top-center" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-medium text-primary-100 mb-4">Gallery</h1>
-          <p className="text-lg text-primary-300/70">
-            Explore creations from our community
+          <h1 className="text-gradient mb-4">Community Gallery</h1>
+          <p className="text-lg text-primary-300/70 max-w-2xl mx-auto">
+            Explore amazing transformations created by our community
           </p>
         </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {loading ? (
-            <div className="col-span-full flex justify-center py-12">
-              <div className="w-8 h-8 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
-            </div>
+            // Loading skeletons
+            Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="bg-dark-800/50 rounded-3xl overflow-hidden animate-pulse"
+              >
+                <div className="aspect-square bg-primary-500/10" />
+              </div>
+            ))
           ) : (
             images.map((image) => (
-              <div key={image.id} className="bg-dark-800/50 backdrop-blur-sm rounded-3xl border border-primary-500/10 overflow-hidden">
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <Link
-                      href={`/profile/${image.profiles?.id}`}
-                      className="group/profile flex items-center"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-primary-500/10 flex items-center justify-center text-primary-400">
-                        {image.profiles?.avatar_url ? (
-                          <img
-                            src={image.profiles.avatar_url}
-                            alt={image.profiles.full_name || "User avatar"}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-sm text-gray-600 font-medium">
-                            {image.profiles?.full_name
-                              ?.charAt(0)
-                              .toUpperCase() ||
-                              image.profiles?.email?.charAt(0).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      <span className="ml-2 text-sm text-primary-300 group-hover/profile:text-primary-200 font-medium transition-colors duration-200">
-                        {image.profiles?.full_name || image.profiles?.email?.split("@")[0]}
-                      </span>
-                    </Link>
-                    <div className="flex items-center space-x-4">
-                      <p className="text-xs text-primary-400/50">
-                        {new Date(image.created_at).toLocaleDateString()}
-                      </p>
+              <div
+                key={image.id}
+                className="group bg-dark-800/50 backdrop-blur-sm rounded-3xl border border-primary-500/10 overflow-hidden hover:border-primary-500/20 transition-all duration-200"
+              >
+                <div className="aspect-square relative">
+                  <ImageLightbox
+                    src={image.image_url}
+                    alt={`Creation ${image.id}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="flex items-center justify-between">
+                      <LikeButton
+                        imageId={image.id}
+                        initialLikes={image.number_of_likes}
+                      />
                       <CopyPromptButton
                         prompt={image.prompt}
-                        className="text-primary-400/70 hover:text-primary-300 shrink-0"
+                        className="text-primary-300/70 hover:text-primary-200"
                       />
                     </div>
                   </div>
+                </div>
+
+                <div className="p-6">
+                  {/* User Profile */}
+                  <Link
+                    href={`/profile/${image.profiles.id}`}
+                    className="group/profile inline-flex items-center mb-4"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary-500/10 flex items-center justify-center text-primary-300">
+                      {image.profiles.avatar_url ? (
+                        <img
+                          src={image.profiles.avatar_url}
+                          alt={image.profiles.full_name || "User"}
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium">
+                          {image.profiles.email.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <span className="ml-2 text-sm text-primary-300 group-hover/profile:text-primary-200 font-medium transition-colors duration-200">
+                      {image.profiles.full_name ||
+                        image.profiles.email.split("@")[0]}
+                    </span>
+                  </Link>
+
+                  {/* Prompt */}
+                  <p className="text-sm text-primary-200 line-clamp-2 mb-4">
+                    {image.prompt}
+                  </p>
+
+                  {/* Creation Date */}
+                  <p className="text-sm text-primary-400/50">
+                    {new Date(image.created_at).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             ))

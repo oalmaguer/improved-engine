@@ -7,14 +7,18 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-plus-jakarta-sans)', 'system-ui', 'sans-serif'],
+        heading: ['var(--font-outfit)', 'system-ui', 'sans-serif'],
+      },
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0', transform: 'scale(0.95)' },
-          '100%': { opacity: '1', transform: 'scale(1)' }
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' }
         }
       },
       animation: {
-        fadeIn: 'fadeIn 0.3s ease-out'
+        fadeIn: 'fadeIn 0.2s ease-out'
       },
       colors: {
         // Primary colors

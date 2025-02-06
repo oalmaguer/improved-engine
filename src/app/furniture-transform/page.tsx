@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@/contexts/UserContext";
 import toast, { Toaster } from "react-hot-toast";
+import ImageLightbox from "@/app/components/image-lightbox/image-lightbox";
 
 const furnitureStyles = {
     futuristic: {
@@ -210,7 +211,7 @@ export default function FurnitureTransform() {
                                 <div>
                                     <h4 className="text-sm text-primary-300/70 mb-2">Original Room</h4>
                                     <div className="relative aspect-square rounded-2xl overflow-hidden">
-                                        <img
+                                        <ImageLightbox
                                             src={imagePreview}
                                             alt="Original room"
                                             className="w-full h-full object-cover"
@@ -222,7 +223,7 @@ export default function FurnitureTransform() {
                                 <div>
                                     <h4 className="text-sm text-primary-300/70 mb-2">Transformed Room ({furnitureStyles[selectedStyle!].name})</h4>
                                     <div className="relative aspect-square rounded-2xl overflow-hidden">
-                                        <img
+                                        <ImageLightbox
                                             src={generatedImage}
                                             alt="Transformed room"
                                             className="w-full h-full object-cover"
