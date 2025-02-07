@@ -6,6 +6,30 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { useUser } from "@/contexts/UserContext";
+import { useTokens } from "@/contexts/TokenContext";
+
+const models = {
+  "flux-schnell": {
+    name: "Basic",
+    description: "Fast generation with basic quality",
+    tokenCost: 1,
+    icon: "⚡",
+  },
+  "flux-dev": {
+    name: "Premium",
+    description: "High quality with fast turnaround",
+    tokenCost: 2,
+    icon: "🚀",
+  },
+  "flux-1.1-pro-ultra": {
+    name: "Ultra",
+    description: "Maximum quality with advanced features",
+    tokenCost: 3,
+    icon: "✨",
+  },
+} as const;
+
+type ModelKey = keyof typeof models;
 
 const styles = {
   realistic: {
@@ -80,6 +104,8 @@ type StyleKey = keyof typeof styles;
 
 export default function Home() {
   const { user } = useUser();
+  const { tokens, useTokens: spendTokens } = useTokens();
+  const [selectedModel, setSelectedModel] = useState<ModelKey>("flux-dev");
   const [prompt, setPrompt] = useState("");
   const [enhancedPrompt, setEnhancedPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -120,7 +146,35 @@ export default function Home() {
       return;
     }
 
-    const finalPrompt = useEnhanced && enhancedPrompt ? enhancedPrompt : prompt;
+    // Calculate token cost but don't spend yet
+    const tokenCost = models[selectedModel].tokenCost;
+    console.log('Checking token balance:', {
+      cost: tokenCost,
+      currentBalance: tokens
+    });
+
+    // Check if user has enough tokens without spending them
+    if (tokens < tokenCost) {
+      toast.error("Insufficient tokens");
+      router.push("/tokens");
+      return;
+    }
+
+    // Combine user prompt with selected style prompts
+    let finalPrompt = prompt;
+    if (selectedStyles.size > 0) {
+      const stylePrompts = Array.from(selectedStyles)
+        .map(style => styles[style].prompt)
+        .join(", ");
+      finalPrompt = `${finalPrompt}, ${stylePrompts}`;
+    }
+
+    console.log('Generating image with:', {
+      prompt: finalPrompt,
+      model: selectedModel,
+      useEnhanced,
+      enhancedPrompt,
+    });
 
     setIsLoading(true);
     try {
@@ -129,34 +183,57 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt: finalPrompt }),
+        body: JSON.stringify({
+          prompt: finalPrompt,
+          model: selectedModel
+        }),
       });
 
       const data = await response.json();
+      console.log('API Response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate image');
+      }
 
       if (data.error) {
         throw new Error(data.error);
       }
 
-      setGeneratedImage(data.imageUrl);
+      // Only spend tokens after successful generation
+      const success = await spendTokens(tokenCost);
+      if (!success) {
+        throw new Error("Failed to process token payment");
+      }
 
-      // Save to Supabase with user_id
-      const { error } = await supabase.from("images").insert([
+      setGeneratedImage(data.imageUrl);
+      console.log('Image generated successfully:', data.imageUrl);
+
+      // Save to Supabase
+      const { error: supabaseError } = await supabase.from("images").insert([
         {
           prompt: finalPrompt,
           image_url: data.imageUrl[0],
           user_id: user.id,
+          model: selectedModel,
           categories: Array.from(selectedStyles).map(
             (style) => styles[style].name
           ),
         },
       ]);
 
-      if (error) throw error;
+      if (supabaseError) {
+        console.error('Supabase error:', supabaseError);
+        throw supabaseError;
+      }
+
       toast.success("Image generated and saved successfully!");
     } catch (error) {
-      toast.error("Failed to generate image");
-      console.error(error);
+      console.error('Generation error:', {
+        message: error.message,
+        stack: error.stack
+      });
+      toast.error(error.message || "Failed to generate image");
     } finally {
       setIsLoading(false);
     }
@@ -182,6 +259,35 @@ export default function Home() {
           <div className="mt-16">
             <div className="border border-primary-500/10 p-8 bg-dark-800/50 backdrop-blur-sm rounded-3xl rounded-2xl shadow-sm  p-8">
               <div className="max-w-2xl mx-auto space-y-8">
+                {/* Model Selector */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-primary-300 mb-2">
+                    Select Model
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {Object.entries(models).map(([key, model]) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedModel(key as ModelKey)}
+                        className={`p-4 rounded-xl border transition-all duration-200 text-left
+                          ${selectedModel === key
+                            ? "border-primary-500 bg-primary-500/10 shadow-glow"
+                            : "border-primary-500/10 hover:border-primary-500/20"
+                          }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-2xl">{model.icon}</span>
+                          <span className="text-sm font-medium text-primary-300">
+                            {model.tokenCost} 🪙
+                          </span>
+                        </div>
+                        <h3 className="font-medium text-primary-100">{model.name}</h3>
+                        <p className="text-sm text-primary-300/70">{model.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Style Selector */}
                 <div>
                   <label className="block text-base font-medium  mb-3">

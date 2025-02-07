@@ -2,6 +2,7 @@
 
 import "./globals.css";
 import { UserProvider } from "@/contexts/UserContext";
+import { TokenProvider } from "@/contexts/TokenContext";
 import Navbar from "./components/navbar/navbar";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 
@@ -24,8 +25,10 @@ export default function RootLayout({
     <html lang="en" className={`${outfit.variable} ${plusJakartaSans.variable}`}>
       <body>
         <UserProvider>
-          <Navbar />
-          {children}
+          <TokenProvider>
+            <Navbar />
+            {children}
+          </TokenProvider>
         </UserProvider>
       </body>
     </html>
