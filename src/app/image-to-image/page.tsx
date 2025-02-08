@@ -72,6 +72,31 @@ export default function ImageToImage() {
     }
   };
 
+  const handleStyleToggle = (key: StyleKey) => {
+    const newStyles = new Set(selectedStyles);
+    const stylePrompt = styles[key].prompt;
+
+    if (newStyles.has(key)) {
+      // Remove the style
+      newStyles.delete(key);
+      // Remove the style's prompt, handling both first prompt and subsequent prompts
+      if (prompt === stylePrompt) {
+        setPrompt("");
+      } else if (prompt.includes(`, ${stylePrompt}`)) {
+        setPrompt(prompt.replace(`, ${stylePrompt}`, ""));
+      } else if (prompt.includes(`${stylePrompt}, `)) {
+        setPrompt(prompt.replace(`${stylePrompt}, `, ""));
+      }
+    } else {
+      // Add the style
+      newStyles.add(key);
+      // Add the style's prompt to the input
+      const newPrompt = prompt ? `${prompt}, ${stylePrompt}` : stylePrompt;
+      setPrompt(newPrompt);
+    }
+    setSelectedStyles(newStyles);
+  };
+
   const generateImage = async () => {
     if (!user) {
       toast.error("Please sign in to generate images");
@@ -180,17 +205,7 @@ export default function ImageToImage() {
                     {(Object.keys(styles) as StyleKey[]).map((key) => (
                       <button
                         key={key}
-                        onClick={() => {
-                          const newStyles = new Set(selectedStyles);
-                          if (newStyles.has(key)) {
-                            newStyles.delete(key);
-                          } else {
-                            newStyles.add(key);
-                          }
-                          setSelectedStyles(newStyles);
-                          // add the style to the prompt
-                          setPrompt(prompt + styles[key].prompt);
-                        }}
+                        onClick={() => handleStyleToggle(key)}
                         className={`flex items-center justify-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                           selectedStyles.has(key)
                             ? "bg-black text-white ring-2 ring-black ring-offset-2"

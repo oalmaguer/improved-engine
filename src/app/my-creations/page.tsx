@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import ImageLightbox from "../components/image-lightbox/image-lightbox";
 import CopyPromptButton from "../components/copy-prompt-button/copy-prompt-button";
 import { Toaster } from "react-hot-toast";
+import CreatedImageCard from "../components/created-image-card/created-image-card";
 
 interface Image {
   id: number;
@@ -90,68 +91,19 @@ export default function MyCreations() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {images.map((image) => (
-              <div
+              <CreatedImageCard
                 key={image.id}
-                className="group relative bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg"
-              >
-                <div className="aspect-square">
-                  <ImageLightbox
-                    src={image.image_url}
-                    alt={image.prompt}
-                    className="w-full h-full"
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex justify-between items-start gap-4 mb-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-pink-500/70 mb-2">
-                        Prompt
-                      </p>
-                      <p className="text-gray-900 line-clamp-2 text-sm">
-                        {image.prompt}
-                      </p>
-                    </div>
-                    <CopyPromptButton
-                      prompt={image.prompt}
-                      className="text-gray-400 hover:text-gray-900 shrink-0"
-                    />
-                  </div>
-                  {image.categories && image.categories.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-4">
-                      {image.categories.map((category, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-50 text-pink-700"
-                        >
-                          {category}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-                    <p className="text-xs text-gray-400">
-                      {new Date(image.created_at).toLocaleDateString(
-                        undefined,
-                        {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        }
-                      )}
-                    </p>
-                    <button
-                      onClick={() => {
-                        /* Add delete functionality */
-                      }}
-                      className="text-xs text-pink-600 hover:text-pink-700 transition-colors duration-200"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
+                id={image.id}
+                imageUrl={image.image_url}
+                prompt={image.prompt}
+                categories={image.categories}
+                createdAt={image.created_at}
+                user={image.profiles}
+                variant="grid"
+                showUser={false}
+              />
             ))}
           </div>
         )}

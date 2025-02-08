@@ -7,6 +7,33 @@ import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { useUser } from "@/contexts/UserContext";
 
+const models = {
+  schnell: {
+    name: "Schnell",
+    description: "Ultra-fast, optimized for speed",
+    icon: "🚀",
+    tier: "Pro",
+  },
+  lightning: {
+    name: "Lightning",
+    description: "Ultra-fast SDXL, 4-step generation",
+    icon: "⚡",
+    tier: "Pro",
+  },
+  flux: {
+    name: "Flux-Dev",
+    description: "Fast & efficient, great for quick iterations",
+    icon: "⚡",
+    tier: "Free",
+  },
+  pro: {
+    name: "Pro- flux-1.1-pro",
+    description: "Higher quality, more detailed results",
+    icon: "✨",
+    tier: "Pro",
+  },
+};
+
 const styles = {
   realistic: {
     name: "Realistic",
@@ -89,6 +116,7 @@ export default function Home() {
   const [selectedStyles, setSelectedStyles] = useState<Set<StyleKey>>(
     new Set<StyleKey>()
   );
+  const [selectedModel, setSelectedModel] = useState<string>("flux");
   const router = useRouter();
 
   const enhancePrompt = async (basePrompt: string) => {
@@ -143,7 +171,10 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt: finalPrompt }),
+        body: JSON.stringify({
+          prompt: finalPrompt,
+          model: selectedModel,
+        }),
       });
 
       const data = await response.json();
@@ -178,165 +209,206 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Toaster position="top-center" />
+      <div className="py-16 px-8">
+        <Toaster position="top-center" />
 
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white pt-16 pb-32">
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-medium tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-              Create stunning images
-              <span className="block text-2xl sm:text-3xl text-gray-500 mt-4 font-normal">
-                with the power of AI
-              </span>
-            </h1>
-          </div>
+        {/* Hero Section */}
+        <div className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white pt-16 pb-32">
+          <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h1 className="text-4xl font-medium tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+                Create stunning images
+                <span className="block text-2xl sm:text-3xl text-gray-500 mt-4 font-normal">
+                  with the power of AI
+                </span>
+              </h1>
+            </div>
 
-          {/* Main Creation Area */}
-          <div className="mt-16">
-            <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-8">
-              <div className="max-w-2xl mx-auto space-y-8">
-                {/* Style Selector */}
-                <div>
-                  <label className="block text-base font-medium text-gray-900 mb-3">
-                    Choose Styles (Optional)
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {(Object.keys(styles) as StyleKey[]).map((key) => (
-                      <button
-                        key={key}
-                        onClick={() => {
-                          const newStyles = new Set<StyleKey>(selectedStyles);
-                          if (newStyles.has(key)) {
-                            newStyles.delete(key);
-                          } else {
-                            newStyles.add(key);
-                          }
-                          setSelectedStyles(newStyles);
-                        }}
-                        className={`flex items-center justify-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                          selectedStyles.has(key)
-                            ? "bg-black text-white ring-2 ring-black ring-offset-2"
-                            : "bg-gray-50 text-gray-900 hover:bg-gray-100"
-                        }`}
-                      >
-                        <span className="mr-2">{styles[key].icon}</span>
-                        {styles[key].name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Prompt Input */}
-                <div>
-                  <label
-                    htmlFor="prompt"
-                    className="block text-base font-medium text-gray-900 mb-3"
-                  >
-                    What would you like to create?
-                  </label>
-                  <div className="space-y-3">
-                    <div className="relative flex flex-col gap-3">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          id="prompt"
-                          value={prompt}
-                          onChange={(e) => setPrompt(e.target.value)}
-                          className="block w-full px-4 py-3 pr-24 rounded-xl bg-gray-50 border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                          placeholder="A serene Japanese garden with cherry blossoms..."
-                        />
+            {/* Main Creation Area */}
+            <div className="mt-16">
+              <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-8">
+                <div className="max-w-2xl mx-auto space-y-8">
+                  {/* Model Selection */}
+                  <div className="mb-12">
+                    <h2 className="text-lg font-medium text-gray-900 mb-4">
+                      Choose AI Model
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {Object.entries(models).map(([key, model]) => (
                         <button
-                          onClick={generateImage}
-                          disabled={isLoading}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-300"
+                          key={key}
+                          onClick={() => setSelectedModel(key)}
+                          className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                            selectedModel === key
+                              ? "border-black bg-black text-white"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
                         >
-                          {isLoading ? (
-                            <div className="flex items-center space-x-2">
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              <span>Creating...</span>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">{model.icon}</span>
+                                <span className="font-medium">
+                                  {model.name}
+                                </span>
+                              </div>
+                              <p className="text-sm mt-1 opacity-80">
+                                {model.description}
+                              </p>
                             </div>
-                          ) : (
-                            "Create"
-                          )}
+                            {model.tier === "Pro" && (
+                              <span className="px-2 py-1 bg-pink-500/10 text-pink-700 rounded-full text-xs font-medium">
+                                Pro
+                              </span>
+                            )}
+                          </div>
                         </button>
-                      </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Example Prompts */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    <span className="text-sm text-gray-500">Try:</span>
-                    {[
-                      "A majestic dragon",
-                      "A cozy cafe interior",
-                      "A mystical forest",
-                    ].map((example) => (
-                      <button
-                        key={example}
-                        onClick={() => setPrompt(example)}
-                        className="text-sm text-gray-600 hover:text-black bg-gray-50 px-3 py-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
-                      >
-                        {example}
-                      </button>
-                    ))}
+                  {/* Style Selector */}
+                  <div>
+                    <label className="block text-base font-medium text-gray-900 mb-3">
+                      Choose Styles (Optional)
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {(Object.keys(styles) as StyleKey[]).map((key) => (
+                        <button
+                          key={key}
+                          onClick={() => {
+                            const newStyles = new Set<StyleKey>(selectedStyles);
+                            if (newStyles.has(key)) {
+                              newStyles.delete(key);
+                            } else {
+                              newStyles.add(key);
+                            }
+                            setSelectedStyles(newStyles);
+                          }}
+                          className={`flex items-center justify-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                            selectedStyles.has(key)
+                              ? "bg-black text-white ring-2 ring-black ring-offset-2"
+                              : "bg-gray-50 text-gray-900 hover:bg-gray-100"
+                          }`}
+                        >
+                          <span className="mr-2">{styles[key].icon}</span>
+                          {styles[key].name}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Generated Image Display */}
-                  {generatedImage && (
-                    <div className="relative mt-8 group">
-                      <img
-                        src={generatedImage}
-                        alt="Generated image"
-                        className="w-full rounded-2xl shadow-lg"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-2xl flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {/* Prompt Input */}
+                  <div>
+                    <label
+                      htmlFor="prompt"
+                      className="block text-base font-medium text-gray-900 mb-3"
+                    >
+                      What would you like to create?
+                    </label>
+                    <div className="space-y-3">
+                      <div className="relative flex flex-col gap-3">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            id="prompt"
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            className="block w-full px-4 py-3 pr-24 rounded-xl bg-gray-50 border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                            placeholder="A serene Japanese garden with cherry blossoms..."
+                          />
                           <button
-                            onClick={() => router.push("/gallery")}
-                            className="bg-white/90 backdrop-blur-sm text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-colors duration-200"
+                            onClick={generateImage}
+                            disabled={isLoading}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-300"
                           >
-                            View in Gallery
+                            {isLoading ? (
+                              <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Creating...</span>
+                              </div>
+                            ) : (
+                              "Create"
+                            )}
                           </button>
                         </div>
                       </div>
                     </div>
-                  )}
+
+                    {/* Example Prompts */}
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      <span className="text-sm text-gray-500">Try:</span>
+                      {[
+                        "A majestic dragon",
+                        "A cozy cafe interior",
+                        "A mystical forest",
+                      ].map((example) => (
+                        <button
+                          key={example}
+                          onClick={() => setPrompt(example)}
+                          className="text-sm text-gray-600 hover:text-black bg-gray-50 px-3 py-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                        >
+                          {example}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Generated Image Display */}
+                    {generatedImage && (
+                      <div className="relative mt-8 group">
+                        <img
+                          src={generatedImage}
+                          alt="Generated image"
+                          className="w-full rounded-2xl shadow-lg"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-2xl flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <button
+                              onClick={() => router.push("/gallery")}
+                              className="bg-white/90 backdrop-blur-sm text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-colors duration-200"
+                            >
+                              View in Gallery
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Latest Images */}
+            <div className="mt-16">
+              <h2 className="text-xl font-medium text-gray-900 mb-6">
+                Latest Creations
+              </h2>
+              <LatestImages />
+            </div>
           </div>
 
-          {/* Latest Images */}
-          <div className="mt-16">
-            <h2 className="text-xl font-medium text-gray-900 mb-6">
-              Latest Creations
-            </h2>
-            <LatestImages />
-          </div>
-        </div>
-
-        {/* Bottom Gallery Link */}
-        <div className="text-center pb-16">
-          <button
-            onClick={() => router.push("/gallery")}
-            className="text-gray-600 hover:text-black transition-colors duration-200 flex items-center justify-center space-x-2 mx-auto"
-          >
-            <span>Browse Gallery</span>
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {/* Bottom Gallery Link */}
+          <div className="text-center pb-16">
+            <button
+              onClick={() => router.push("/gallery")}
+              className="text-gray-600 hover:text-black transition-colors duration-200 flex items-center justify-center space-x-2 mx-auto"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
+              <span>Browse Gallery</span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>

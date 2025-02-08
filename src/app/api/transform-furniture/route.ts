@@ -5,10 +5,11 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const imageFile = formData.get("image") as File;
     const prompt = formData.get("prompt") as string;
+    const style = formData.get("style") as string;
 
-    if (!imageFile || !prompt) {
+    if (!imageFile || !style) {
       return NextResponse.json(
-        { error: "Image and prompt are required" },
+        { error: "Image and style are required" },
         { status: 400 }
       );
     }
@@ -27,12 +28,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Log request details (without sensitive data)
-    console.log("Making request to Replicate API with prompt:", prompt);
-
-    console.log("llega inmage to image con ", prompt);
-    // Call Replicate API
-
+    // Call Replicate API with the Flux model
     const response = await fetch(
       "https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions",
       {
@@ -43,41 +39,29 @@ export async function POST(request: Request) {
         },
         body: JSON.stringify({
           input: {
-            prompt:
-              "Transform the image to " +
-              prompt +
-              " style. Keep the original image details as much as possible.",
             image: `data:image/jpeg;base64,${base64Image}`,
+            prompt: `Transform this room into ${style} style, maintain the same layout and furniture placement, ${
+              prompt || ""
+            }`,
             go_fast: true,
-            guidance: 3.2,
+            guidance: 8.5,
             megapixels: "1",
             num_outputs: 1,
             aspect_ratio: "1:1",
-
             output_format: "webp",
             output_quality: 90,
-            prompt_strength: 0.75,
-            num_inference_steps: 35,
+            prompt_strength: 0.65,
+            num_inference_steps: 30,
           },
         }),
       }
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Replicate API Error Response:", {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorData,
-      });
-      return NextResponse.json(
-        { error: errorData.detail || "Failed to generate image" },
-        { status: response.status }
-      );
+      throw new Error("Failed to generate image");
     }
 
     let prediction = await response.json();
-    console.log("Replicate API initial response:", prediction);
 
     // Poll for the result
     while (
@@ -102,13 +86,10 @@ export async function POST(request: Request) {
       throw new Error("Image generation failed");
     }
   } catch (error) {
-    console.error("Error details:", {
-      error,
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to generate image";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    console.error("Error:", error);
+    return NextResponse.json(
+      { error: "Failed to transform furniture" },
+      { status: 500 }
+    );
   }
 }
