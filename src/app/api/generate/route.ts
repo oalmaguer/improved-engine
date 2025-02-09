@@ -76,16 +76,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get model config and set prompt
-    const config = { ...MODEL_CONFIGS[model as keyof typeof MODEL_CONFIGS] };
-
     // Enhance the prompt based on the model
     let enhancedPrompt = prompt;
     if (model === "flux-1.1-pro-ultra") {
       enhancedPrompt = `${prompt}, masterpiece, best quality, extremely detailed`;
     }
 
-    config.input.prompt = enhancedPrompt;
+    // Get model config and set prompt
+    const config = {
+      input: {
+        ...MODEL_CONFIGS[model as keyof typeof MODEL_CONFIGS].input,
+        prompt: enhancedPrompt,
+      },
+    };
 
     console.log("Final config:", config);
 
