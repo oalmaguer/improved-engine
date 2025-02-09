@@ -8,20 +8,14 @@
     "start": "next start"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.0",
     "@supabase/supabase-js": "^2.39.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lightbox.js-react": "^1.4.4",
-    "lucide-react": "^0.475.0",
     "next": "14.1.0",
     "openai": "^4.82.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
-    "react-image-lightbox": "^5.1.4",
-    "replicate": "^1.0.1",
-    "tailwind-merge": "^3.0.1",
-    "tailwindcss-animate": "^1.0.7"
+    "replicate": "^1.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.5",

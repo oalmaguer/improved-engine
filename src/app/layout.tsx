@@ -2,42 +2,33 @@
 
 import "./globals.css";
 import { UserProvider } from "@/contexts/UserContext";
-import Sidebar from "./components/sidebar/sidebar";
-import { usePathname } from "next/navigation";
+import { TokenProvider } from "@/contexts/TokenContext";
+import Navbar from "./components/navbar/navbar";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta-sans",
+});
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const isMobileOptimizedRoute = ["/gallery", "/my-creations"].includes(
-    pathname
-  );
-
   return (
-    <html lang="en" className="h-full">
-      <head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
-        />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="theme-color" content="#ffffff" />
-      </head>
-      <body className="h-full">
+    <html lang="en" className={`${outfit.variable} ${plusJakartaSans.variable}`}>
+      <body>
         <UserProvider>
-          <div className="flex h-full">
-            <Sidebar />
-            <main
-              className={`flex-1 ${
-                isMobileOptimizedRoute ? "" : "md:ml-[240px]"
-              } ${isMobileOptimizedRoute ? "pb-20 md:pb-0" : ""}`}
-            >
-              {children}
-            </main>
-          </div>
+          <TokenProvider>
+            <Navbar />
+            {children}
+          </TokenProvider>
         </UserProvider>
       </body>
     </html>

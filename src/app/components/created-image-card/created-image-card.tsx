@@ -49,12 +49,11 @@ export default function CreatedImageCard({
   };
 
   return (
-    <div className={containerClasses[variant]}>
-      <div
-        className="image-container "
-        onClick={() => openLightbox(imageUrl)}
-        style={{ cursor: "pointer" }}
-      >
+    <div
+      className={containerClasses[variant]}
+      onClick={() => openLightbox(imageUrl)}
+    >
+      <div className="image-container" style={{ cursor: "pointer" }}>
         {imageUrl && (
           <Image
             src={imageUrl}

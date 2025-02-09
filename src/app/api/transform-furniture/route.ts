@@ -48,7 +48,7 @@ export async function POST(request: Request) {
             megapixels: "1",
             num_outputs: 1,
             aspect_ratio: "1:1",
-            output_format: "webp",
+            output_format: "jpg",
             output_quality: 90,
             prompt_strength: 0.65,
             num_inference_steps: 30,

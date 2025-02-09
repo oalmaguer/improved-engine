@@ -30,9 +30,7 @@ export async function POST(request: Request) {
     // Log request details (without sensitive data)
     console.log("Making request to Replicate API with prompt:", prompt);
 
-    console.log("llega inmage to image con ", prompt);
     // Call Replicate API
-
     const response = await fetch(
       "https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions",
       {
@@ -43,21 +41,19 @@ export async function POST(request: Request) {
         },
         body: JSON.stringify({
           input: {
-            prompt:
-              "Transform the image to " +
-              prompt +
-              " style. Keep the original image details as much as possible.",
+            prompt,
             image: `data:image/jpeg;base64,${base64Image}`,
-            go_fast: true,
-            guidance: 3.2,
+            go_fast: false,
+            guidance: 7.5,
             megapixels: "1",
             num_outputs: 1,
             aspect_ratio: "1:1",
-
-            output_format: "webp",
+            output_format: "jpg",
             output_quality: 90,
-            prompt_strength: 0.75,
-            num_inference_steps: 35,
+            prompt_strength: 0.63,
+            num_inference_steps: 40,
+            negative_prompt:
+              "blurry, low quality, distorted layout, wrong perspective, bad architecture",
           },
         }),
       }

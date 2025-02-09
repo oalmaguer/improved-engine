@@ -1,91 +1,120 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 interface ImageLightboxProps {
   src: string;
   alt: string;
+  children?: React.ReactNode;
   className?: string;
+  triggerClassName?: string;
 }
 
 export default function ImageLightbox({
   src,
   alt,
-  className = "",
+  children,
+  className,
+  triggerClassName,
 }: ImageLightboxProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-      }
-    };
-
     if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
+      // Lock scroll when lightbox is open
       document.body.style.overflow = "hidden";
+
+      // Calculate optimal dimensions
+      const img = new window.Image();
+      img.src = src;
+      img.onload = () => {
+        const windowWidth = window.innerWidth * 0.9;
+        const windowHeight = window.innerHeight * 0.9;
+        const imageRatio = img.width / img.height;
+        const windowRatio = windowWidth / windowHeight;
+
+        let width, height;
+        if (imageRatio > windowRatio) {
+          width = windowWidth;
+          height = windowWidth / imageRatio;
+        } else {
+          height = windowHeight;
+          width = windowHeight * imageRatio;
+        }
+
+        setDimensions({ width, height });
+      };
+    } else {
+      // Restore scroll when lightbox is closed
+      document.body.style.overflow = "unset";
     }
 
+    // Cleanup
     return () => {
-      document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "unset";
     };
-  }, [isOpen]);
+  }, [isOpen, src]);
 
   return (
     <>
+      {/* Trigger */}
       <div
         onClick={() => setIsOpen(true)}
-        className={`cursor-pointer ${className}`}
-      ></div>
-      <Image
-        onClick={() => setIsOpen(true)}
-        src={src}
-        alt={alt}
-        width={400}
-        height={400}
-        className="rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.1]"
-      />
-      {/* Lightbox overlay */}
+        className={`cursor-pointer ${triggerClassName || ""}`}
+      >
+        {children || (
+          <Image
+            src={src}
+            alt={alt}
+            width={400}
+            height={400}
+            className={`w-full h-full object-cover ${className || ""}`}
+          />
+        )}
+      </div>
+
+      {/* Lightbox */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 transition-all duration-300 ease-in-out"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="relative max-w-5xl w-full h-full flex items-center justify-center"
+            className="relative flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
               onClick={() => setIsOpen(false)}
-              className="absolute top-6 right-6 text-white/80 hover:text-white transition-colors duration-200 focus:outline-none z-10 backdrop-blur-sm bg-black/20 p-2 rounded-full"
+              className="absolute -top-12 right-0 text-white/80 hover:text-white transition-colors duration-200 p-2"
             >
               <svg
-                className="h-5 w-5"
+                className="w-6 h-6"
                 fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-                viewBox="0 0 24 24"
                 stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <path d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
 
-            {/* Image container with animation */}
-            <div className="relative w-full h-full flex items-center justify-center animate-fadeIn">
+            {/* Image */}
+            <div className="relative animate-fadeIn">
               <Image
                 src={src}
                 alt={alt}
-                fill
-                className="object-contain"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 50vw"
-                priority
+                width={dimensions.width}
+                height={dimensions.height}
+                className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
                 quality={95}
+                priority
               />
             </div>
           </div>
