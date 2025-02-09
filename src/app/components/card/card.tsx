@@ -25,7 +25,7 @@ interface CardProps {
   variant?: "grid" | "slider";
 }
 
-export default function Card({ image, variant = "grid" }: CardProps) {
+export default function Card({ image, variant = "grid" }: any) {
   const containerClasses = {
     grid: "bg-dark-800/50 aspect-square relative rounded-3xl overflow-hidden group/card",
     slider:
@@ -116,7 +116,10 @@ export default function Card({ image, variant = "grid" }: CardProps) {
           </Link>
 
           <div className="flex items-center space-x-2">
-            <LikeButton imageId={image.id} likes={image.number_of_likes} />
+            <LikeButton
+              imageId={image.id}
+              initialLikes={image.number_of_likes}
+            />
             {image.onDelete && (
               <button
                 onClick={(e) => {
