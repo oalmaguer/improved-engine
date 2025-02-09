@@ -57,9 +57,7 @@ export default function ImageToImage() {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string>("");
-  const [selectedStyles, setSelectedStyles] = useState<Set<StyleKey>>(
-    new Set()
-  );
+  const [selectedStyles, setSelectedStyles] = useState<Set<any>>(new Set());
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,12 +104,12 @@ export default function ImageToImage() {
       formData.append("image", selectedImage);
       formData.append("prompt", prompt); // Send the main prompt
       // Append each selected style
-      selectedStyles.forEach(styleKey => {
+      selectedStyles.forEach((styleKey) => {
         formData.append("styles", styles[styleKey].prompt);
       });
 
-
-      const response = await fetch("/api/generate-image-to-image", { // Use the new API route
+      const response = await fetch("/api/generate-image-to-image", {
+        // Use the new API route
         method: "POST",
         body: formData,
       });
@@ -127,7 +125,9 @@ export default function ImageToImage() {
         throw new Error("No image URL in response");
       }
 
-      const imageUrl = Array.isArray(data.imageUrl) ? data.imageUrl[0] : data.imageUrl;
+      const imageUrl = Array.isArray(data.imageUrl)
+        ? data.imageUrl[0]
+        : data.imageUrl;
       setGeneratedImage(imageUrl);
 
       // Save to Supabase
@@ -148,7 +148,9 @@ export default function ImageToImage() {
       toast.success("Image generated successfully!");
     } catch (error) {
       console.error("Error generating image:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to generate image");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to generate image"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -159,7 +161,9 @@ export default function ImageToImage() {
       <Toaster position="top-center" />
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-medium text-primary-100 mb-4">Transform Image</h1>
+          <h1 className="text-4xl font-medium text-primary-100 mb-4">
+            Transform Image
+          </h1>
           <p className="text-lg text-primary-300/70">
             Transform any image with AI-powered style transfer
           </p>
@@ -180,8 +184,18 @@ export default function ImageToImage() {
                       />
                     ) : (
                       <>
-                        <svg className="w-12 h-12 text-primary-500/70 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        <svg
+                          className="w-12 h-12 text-primary-500/70 mb-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
                         </svg>
                         <p className="text-sm text-primary-300/70">
                           Click to upload an image
@@ -218,16 +232,19 @@ export default function ImageToImage() {
 
             {/* Style Selection */}
             <div>
-              <h3 className="text-base font-medium text-primary-100 mb-4">Choose Styles</h3>
+              <h3 className="text-base font-medium text-primary-100 mb-4">
+                Choose Styles
+              </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {(Object.keys(styles) as StyleKey[]).map((key) => (
                   <button
                     key={key}
                     onClick={() => toggleStyle(key)}
                     className={`flex items-center justify-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 
-                      ${selectedStyles.has(key)
-                        ? "bg-primary-500 text-white shadow-glow"
-                        : "bg-primary-500/10 text-primary-300 hover:bg-primary-500/20"
+                      ${
+                        selectedStyles.has(key)
+                          ? "bg-primary-500 text-white shadow-glow"
+                          : "bg-primary-500/10 text-primary-300 hover:bg-primary-500/20"
                       }`}
                   >
                     <span className="mr-2">{styles[key].icon}</span>
@@ -241,11 +258,15 @@ export default function ImageToImage() {
           {/* Generated Image Display */}
           {generatedImage && (
             <div className="bg-dark-800/50 backdrop-blur-sm rounded-3xl border border-primary-500/10 p-8">
-              <h3 className="text-lg font-medium text-primary-100 mb-4">Result</h3>
+              <h3 className="text-lg font-medium text-primary-100 mb-4">
+                Result
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Original Image */}
                 <div>
-                  <h4 className="text-sm text-primary-300/70 mb-2">Original Image</h4>
+                  <h4 className="text-sm text-primary-300/70 mb-2">
+                    Original Image
+                  </h4>
                   <div className="relative aspect-square rounded-2xl overflow-hidden">
                     <ImageLightbox
                       src={imagePreview}
@@ -257,7 +278,9 @@ export default function ImageToImage() {
 
                 {/* Transformed Image */}
                 <div>
-                  <h4 className="text-sm text-primary-300/70 mb-2">Transformed Image</h4>
+                  <h4 className="text-sm text-primary-300/70 mb-2">
+                    Transformed Image
+                  </h4>
                   <div className="relative aspect-square rounded-2xl overflow-hidden">
                     <ImageLightbox
                       src={generatedImage}
@@ -293,9 +316,10 @@ export default function ImageToImage() {
             onClick={generateImage}
             disabled={isLoading || !selectedImage || !prompt.trim()}
             className={`w-full py-3 px-4 rounded-xl text-white font-medium transition-all duration-200
-              ${isLoading || !selectedImage || !prompt.trim()
-                ? "bg-primary-500/50 cursor-not-allowed"
-                : "bg-primary-500 hover:bg-primary-600 shadow-glow hover:shadow-glow-lg"
+              ${
+                isLoading || !selectedImage || !prompt.trim()
+                  ? "bg-primary-500/50 cursor-not-allowed"
+                  : "bg-primary-500 hover:bg-primary-600 shadow-glow hover:shadow-glow-lg"
               }`}
           >
             {isLoading ? (
