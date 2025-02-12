@@ -34,6 +34,12 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden sm:flex sm:items-center sm:space-x-8">
             <Link
+              href="/"
+              className="text-primary-300/70 hover:text-primary-300 transition-colors duration-200"
+            >
+              Home
+            </Link>
+            <Link
               href="/gallery"
               className="text-primary-300/70 hover:text-primary-300 transition-colors duration-200"
             >
@@ -117,6 +123,13 @@ export default function Navbar() {
         } sm:hidden absolute w-full bg-dark-800/95 backdrop-blur-lg border-b border-primary-500/10`}
       >
         <div className="px-4 pt-2 pb-3 space-y-2">
+          <Link
+            href="/"
+            className="block px-3 py-2 rounded-lg text-primary-300/70 hover:text-primary-300 hover:bg-primary-500/10 transition-all duration-200"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Home
+          </Link>
           <Link
             href="/gallery"
             className="block px-3 py-2 rounded-lg text-primary-300/70 hover:text-primary-300 hover:bg-primary-500/10 transition-all duration-200"

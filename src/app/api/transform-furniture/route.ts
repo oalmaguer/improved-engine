@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 
+const MODEL_URLS = {
+  "flux-dev": "black-forest-labs/flux-dev",
+} as const;
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const imageFile = formData.get("image") as File;
     const prompt = formData.get("prompt") as string;
-    const style = formData.get("style") as string;
+    const model = formData.get("model") as string;
 
-    if (!imageFile || !style) {
+    if (!imageFile || !prompt) {
       return NextResponse.json(
-        { error: "Image and style are required" },
+        { error: "Image and prompt are required" },
         { status: 400 }
       );
     }
@@ -28,9 +32,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Call Replicate API with the Flux model
+    const modelUrl =
+      MODEL_URLS[model as keyof typeof MODEL_URLS] || MODEL_URLS["flux-dev"];
+
+    // Call Replicate API
     const response = await fetch(
-      "https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions",
+      `https://api.replicate.com/v1/models/${modelUrl}/predictions`,
       {
         method: "POST",
         headers: {
@@ -40,18 +47,17 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           input: {
             image: `data:image/jpeg;base64,${base64Image}`,
-            prompt: `Transform this room into ${style} style, maintain the same layout and furniture placement, ${
-              prompt || ""
-            }`,
-            go_fast: true,
-            guidance: 8.5,
+            prompt: `Transform this room into ${prompt} style, maintain the same layout and furniture placement, make sure the style the user is requested is applied in a way the the user can see the style and notice it very clearly, add more details if you want.`,
+
+            num_inference_steps: model === "flux-schnell" ? 4 : 30,
+            go_fast: false,
+            guidance: 7.2,
             megapixels: "1",
             num_outputs: 1,
             aspect_ratio: "1:1",
             output_format: "jpg",
             output_quality: 90,
-            prompt_strength: 0.65,
-            num_inference_steps: 30,
+            prompt_strength: 0.63,
           },
         }),
       }

@@ -10,6 +10,14 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-plus-jakarta-sans)', 'system-ui', 'sans-serif'],
         heading: ['var(--font-outfit)', 'system-ui', 'sans-serif'],
+        'dm-serif': ['var(--font-dm-serif)', 'serif'],
+        'dm-sans': ['var(--font-dm-sans)', 'sans-serif'],
+        'playfair': ['var(--font-playfair)', 'serif'],
+        'roboto': ['var(--font-roboto)', 'sans-serif'],
+        'lora': ['var(--font-lora)', 'serif'],
+        'montserrat': ['var(--font-montserrat)', 'sans-serif'],
+        'source-code': ['var(--font-source-code)', 'monospace'],
+        'inter': ['var(--font-inter)', 'sans-serif'],
       },
       keyframes: {
         fadeIn: {

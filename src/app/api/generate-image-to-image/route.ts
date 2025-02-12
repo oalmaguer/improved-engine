@@ -7,16 +7,16 @@ const MODEL_CONFIG = {
     prompt: "",
     image: "",
     go_fast: false,
-    guidance: 7.5,
+    guidance: 8.5,
     megapixels: "1",
     num_outputs: 1,
     aspect_ratio: "1:1",
     output_format: "jpg",
-    output_quality: 90,
-    prompt_strength: 0.63,
-    num_inference_steps: 40,
+    output_quality: 95,
+    prompt_strength: 0.75,
+    num_inference_steps: 50,
     negative_prompt:
-      "blurry, low quality, distorted layout, wrong perspective, bad architecture",
+      "blurry, low quality, distorted layout, wrong perspective, bad architecture, ugly, deformed, disfigured, watermark, text, signature, duplicate, multiple images, split image",
   },
 };
 

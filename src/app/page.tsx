@@ -7,25 +7,39 @@ import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { useUser } from "@/contexts/UserContext";
 import { useTokens } from "@/contexts/TokenContext";
+import Comments from "./components/comments/comments";
+import ImageModal from "./components/image-modal/image-modal";
 
 const models = {
-  "flux-schnell": {
-    name: "Basic",
-    description: "Fast generation with basic quality",
-    tokenCost: 1,
-    icon: "⚡",
+  "imagen-3": {
+    name: "Google Imagen 3",
+    description: "Professional quality AI image generation",
+    icon: "🎯",
+    tokenCost: 60,
   },
   "flux-dev": {
-    name: "Premium",
-    description: "High quality with fast turnaround",
-    tokenCost: 2,
+    name: "Flux",
+    description: "Balanced quality and speed",
+    icon: "⚡",
+    tokenCost: 30,
+  },
+  "flux-schnell": {
+    name: "Flux Schnell",
+    description: "Fastest generation",
     icon: "🚀",
+    tokenCost: 5,
   },
   "flux-1.1-pro-ultra": {
-    name: "Ultra",
-    description: "Maximum quality with advanced features",
-    tokenCost: 3,
+    name: "Flux Pro Ultra",
+    description: "High quality results",
     icon: "✨",
+    tokenCost: 72,
+  },
+  "recraft-v3": {
+    name: "Recraft V3",
+    description: "Specialized in design",
+    icon: "🎨",
+    tokenCost: 48,
   },
 } as const;
 
@@ -35,7 +49,7 @@ const styles = {
   realistic: {
     name: "Realistic",
     prompt:
-      "photorealistic, highly detailed, professional photography, 8k resolution, sharp focus",
+      "ultra realistic photograph, professional photography, 8k UHD, highly detailed, photorealistic, hyperrealistic, volumetric lighting, professional color grading, sharp focus, RAW photo, masterpiece quality",
     icon: "📸",
   },
   anime: {
@@ -92,11 +106,47 @@ const styles = {
       "steampunk aesthetic, victorian sci-fi, brass and copper tones, mechanical details, steam-powered machinery",
     icon: "⚙️",
   },
+  starwars: {
+    name: "Star Wars",
+    prompt:
+      "Star Wars concept art style, Ralph McQuarrie inspired, sci-fi fantasy, cinematic lighting, epic scale, detailed spaceships and alien worlds, Star Wars universe aesthetic",
+    icon: "🚀",
+  },
+  ps1: {
+    name: "PS1 Style",
+    prompt:
+      "PlayStation 1 era 3D graphics style, low-poly aesthetic, pixelated textures, retro gaming style, chunky polygons, limited color palette, jagged edges, nostalgic 90s video game look",
+    icon: "🎮",
+  },
   abstract: {
     name: "Abstract",
     prompt:
       "abstract art, non-representational, geometric shapes, bold composition, modern abstract expressionism",
     icon: "🎯",
+  },
+  logos: {
+    name: "Logo Design",
+    prompt:
+      "professional logo design, minimalist, scalable, vector style, clean lines, corporate branding, modern logo design, professional graphic design, iconic logo mark, versatile logo",
+    icon: "🎯",
+  },
+  moviePoster: {
+    name: "Movie Poster",
+    prompt:
+      "cinematic movie poster, dramatic composition, professional typography, high contrast, theatrical lighting, film poster style, Hollywood marketing material, compelling visual hierarchy, professional movie advertisement",
+    icon: "🎬",
+  },
+  concertPoster: {
+    name: "Concert Poster",
+    prompt:
+      "Design a minimalist style poster with bold, geometric illustrations of futuristic equipment and a stark, contrasting color palette",
+    icon: "🎸",
+  },
+  wesAnderson: {
+    name: "Wes Anderson",
+    prompt:
+      "Wes Anderson style, symmetrical composition, pastel color palette, whimsical aesthetic, vintage look, meticulous set design, centered framing, quirky and detailed, Grand Budapest Hotel aesthetic",
+    icon: "🎪",
   },
 } as const;
 
@@ -118,17 +168,20 @@ const examplePrompts = [
 export default function Home() {
   const { user } = useUser();
   const { tokens, useTokens: spendTokens } = useTokens();
-  const [selectedModel, setSelectedModel] = useState<ModelKey>("flux-dev");
+  const [selectedModel, setSelectedModel] =
+    useState<keyof typeof models>("imagen-3");
   const [prompt, setPrompt] = useState("");
   const [enhancedPrompt, setEnhancedPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [generatedImage, setGeneratedImage] = useState("");
   const [useEnhanced, setUseEnhanced] = useState(true);
-  const [selectedStyles, setSelectedStyles] = useState<Set<StyleKey>>(
-    new Set<StyleKey>()
-  );
+  const [selectedStyles, setSelectedStyles] = useState<
+    Set<keyof typeof styles>
+  >(new Set<keyof typeof styles>());
   const router = useRouter();
+  const [currentImageId, setCurrentImageId] = useState<number | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   const enhancePrompt = async (generatedImage: string) => {
     //download image
@@ -179,7 +232,12 @@ export default function Home() {
       const stylePrompts = Array.from(selectedStyles)
         .map((style) => styles[style].prompt)
         .join(", ");
-      finalPrompt = `${finalPrompt}, ${stylePrompts}`;
+
+      if (selectedStyles.has("realistic")) {
+        finalPrompt = `Create a photorealistic image: ${finalPrompt}. The image must be ultra-realistic, indistinguishable from a real photograph, with perfect lighting, natural shadows, correct perspective, and photographic details. Use ${stylePrompts}`;
+      } else {
+        finalPrompt = `Generate an image strictly in the style of ${stylePrompts}. Follow the defining characteristics of this style with absolute precision, including color palette, lighting, composition, level of detail, and artistic techniques. The image should be about: ${finalPrompt}`;
+      }
     }
 
     console.log("Generating image with:", {
@@ -228,23 +286,33 @@ export default function Home() {
       }
 
       // Save to Supabase
-
-      const { error: supabaseError } = await supabase.from("images").insert([
-        {
-          prompt: finalPrompt,
-          image_url: data.imageUrl[0],
-          user_id: user.id,
-          model: selectedModel,
-          categories: Array.from(selectedStyles).map(
-            (style) => styles[style].name
-          ),
-        },
-      ]);
+      const {
+        data: { id: newImageId },
+        error: supabaseError,
+      } = await supabase
+        .from("images")
+        .insert([
+          {
+            prompt: finalPrompt,
+            image_url: data.imageUrl[0],
+            user_id: user.id,
+            model: selectedModel,
+            categories: Array.from(selectedStyles).map(
+              (style) => styles[style].name
+            ),
+          },
+        ])
+        .select("id")
+        .single();
 
       if (supabaseError) {
         console.error("Supabase error:", supabaseError);
         throw supabaseError;
       }
+
+      setCurrentImageId(newImageId);
+
+      console.log("newImageId", newImageId);
 
       toast.success("Image generated and saved successfully!");
     } catch (error) {
@@ -264,7 +332,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen  bg-gradient-to-b from-dark-900 to-dark-950 text-white">
+    <div className="bg-gradient-to-b from-dark-900 to-dark-950 text-white pb-8">
       <Toaster position="top-center" />
 
       {/* Hero Section */}
@@ -284,32 +352,31 @@ export default function Home() {
             <div className="border border-primary-500/10 p-8 bg-dark-800/50 backdrop-blur-sm rounded-3xl rounded-2xl shadow-sm  p-8">
               <div className="max-w-2xl mx-auto space-y-8">
                 {/* Model Selector */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-primary-300 mb-2">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-primary-300 mb-1">
                     Select Model
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {Object.entries(models).map(([key, model]) => (
                       <button
                         key={key}
                         onClick={() => setSelectedModel(key as ModelKey)}
-                        className={`p-4 rounded-xl border transition-all duration-200 text-left
-                          ${
-                            selectedModel === key
-                              ? "border-primary-500 bg-primary-500/10 shadow-glow"
-                              : "border-primary-500/10 hover:border-primary-500/20"
-                          }`}
+                        className={`p-3 rounded-lg border transition-all duration-200 text-left ${
+                          selectedModel === key
+                            ? "border-primary-500 bg-primary-500/10 shadow-glow"
+                            : "border-primary-500/10 hover:border-primary-500/20"
+                        }`}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-2xl">{model.icon}</span>
-                          <span className="text-sm font-medium text-primary-300">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xl">{model.icon}</span>
+                          <span className="text-xs font-medium text-primary-300">
                             {model.tokenCost} 🪙
                           </span>
                         </div>
-                        <h3 className="font-medium text-primary-100">
+                        <h3 className="font-medium text-primary-100 text-sm">
                           {model.name}
                         </h3>
-                        <p className="text-sm text-primary-300/70">
+                        <p className="text-xs text-primary-300/70">
                           {model.description}
                         </p>
                       </button>
@@ -318,34 +385,29 @@ export default function Home() {
                 </div>
 
                 {/* Style Selector */}
-                <div>
-                  <label className="block text-base font-medium  mb-3">
-                    Choose Styles (Optional)
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {(Object.keys(styles) as StyleKey[]).map((key) => (
-                      <button
-                        key={key}
-                        onClick={() => {
-                          const newStyles = new Set<StyleKey>(selectedStyles);
-                          if (newStyles.has(key)) {
-                            newStyles.delete(key);
-                          } else {
-                            newStyles.add(key);
-                          }
-                          setSelectedStyles(newStyles);
-                        }}
-                        className={`flex items-center justify-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                          selectedStyles.has(key)
-                            ? "bg-black text-white ring-2 ring-black ring-offset-2"
-                            : "bg-gray-50 text-gray-900 hover:bg-gray-100"
-                        }`}
-                      >
-                        <span className="mr-2">{styles[key].icon}</span>
-                        {styles[key].name}
-                      </button>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1 mt-4">
+                  {Object.entries(styles).map(([key, style]) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        const newStyles = new Set(selectedStyles);
+                        if (newStyles.has(key as StyleKey)) {
+                          newStyles.delete(key as StyleKey);
+                        } else {
+                          newStyles.add(key as StyleKey);
+                        }
+                        setSelectedStyles(newStyles);
+                      }}
+                      className={`p-2 rounded-lg text-sm transition-all duration-200 ${
+                        selectedStyles.has(key as StyleKey)
+                          ? "bg-primary-500/10 text-primary-300"
+                          : "text-primary-300/70 hover:text-primary-300"
+                      }`}
+                    >
+                      <span className="text-lg block mb-1">{style.icon}</span>
+                      <span className="text-xs">{style.name}</span>
+                    </button>
+                  ))}
                 </div>
 
                 {/* Prompt Input */}
@@ -358,13 +420,19 @@ export default function Home() {
                   </label>
                   <div className="space-y-3">
                     <div className="relative">
-                      <input
-                        type="text"
+                      <textarea
                         id="prompt"
                         value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        className="block w-full px-4 py-3 pr-48 rounded-xl bg-gray-50 border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                        onChange={(e) => {
+                          setPrompt(e.target.value);
+                          // Auto-adjust height
+                          e.target.style.height = "auto";
+                          e.target.style.height = `${e.target.scrollHeight}px`;
+                        }}
+                        rows={1}
+                        className="block w-full px-4 py-3 pr-48 rounded-xl bg-gray-50 border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 resize-none overflow-hidden min-h-[44px]"
                         placeholder="A serene Japanese garden with cherry blossoms..."
+                        style={{ height: "auto" }}
                       />
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2">
                         <button
@@ -415,26 +483,35 @@ export default function Home() {
                       <img
                         src={generatedImage}
                         alt="Generated image"
-                        className="w-full rounded-2xl shadow-lg"
+                        className="w-full rounded-2xl shadow-lg cursor-pointer"
+                        onClick={() => setShowModal(true)}
                       />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-2xl flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <div className="flex space-x-4">
-                            <button
-                              onClick={() => (window.location.href = "/")}
-                              className="px-6 py-2.5 bg-black text-white rounded-full hover:bg-gray-900 transition-colors duration-200 text-sm font-medium"
-                            >
-                              Create New
-                            </button>
-                            <button
-                              onClick={() => enhancePrompt(generatedImage)}
-                              className="px-6 py-2.5 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
-                            >
-                              Download
-                            </button>
-                          </div>
+                      <div className="absolute inset-0 bg-dark-900/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-200 rounded-2xl flex items-center justify-center">
+                        <div className="flex space-x-4">
+                          <button
+                            onClick={() => {
+                              setGeneratedImage("");
+                              setPrompt("");
+                              setSelectedStyles(new Set());
+                              setSelectedModel("imagen-3");
+                            }}
+                            className="px-6 py-2.5 bg-dark-800/95 text-primary-300 rounded-xl hover:bg-dark-700/95 transition-colors duration-200 text-sm font-medium border border-primary-500/10 shadow-glow"
+                          >
+                            Create New
+                          </button>
+                          <a
+                            href={generatedImage}
+                            download="generated-image.jpg"
+                            className="px-6 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors duration-200 text-sm font-medium shadow-glow"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Download
+                          </a>
                         </div>
                       </div>
+                      {/* Add Comments section */}
+                      <Comments imageId={currentImageId} />
                     </div>
                   )}
                 </div>
@@ -444,9 +521,7 @@ export default function Home() {
 
           {/* Latest Images */}
           <div className="mt-16">
-            <h2 className="text-xl font-medium text-gray-900 mb-6">
-              Latest Creations
-            </h2>
+            <h2 className="text-xl font-medium  mb-6">Latest Creations</h2>
             <LatestImages />
           </div>
         </div>
@@ -474,6 +549,16 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      {/* Modal */}
+      {showModal && currentImageId && (
+        <ImageModal
+          imageUrl={generatedImage}
+          alt="Generated image"
+          imageId={currentImageId}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 }

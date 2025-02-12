@@ -43,8 +43,17 @@ export default function CreatedImageCard({
       "flex-none w-[280px] sm:w-[300px] h-[280px] sm:h-[300px] relative snap-start rounded-2xl overflow-hidden",
   };
 
-  const openLightbox = (imageUrl: string) => {
-    console.log(imageUrl);
+  /*************  ✨ Codeium Command ⭐  *************/
+  /**
+   * Opens the lightbox for the given image URL.
+   * Logs the image URL to the console and sets the lightbox state to open.
+   *
+   * @param imageUrl - The URL of the image to be displayed in the lightbox.
+   */
+
+  /******  3b72fe3c-9f45-4bfa-a0fe-fd10454a6d5c  *******/ const openLightbox = (
+    imageUrl: string
+  ) => {
     setIsLightboxOpen(true);
   };
 
@@ -134,14 +143,19 @@ export default function CreatedImageCard({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 cursor-pointer"
           onClick={() => setIsLightboxOpen(false)}
         >
-          <Image
-            src={imageUrl}
-            alt={prompt}
-            className="max-w-full max-h-full"
-            width={window.innerWidth * 0.5}
-            height={window.innerHeight * 0.2}
-            priority
-          />
+          <span
+            style={{ viewTransitionName: "image" }}
+            className="w-full h-full span-img"
+          >
+            <Image
+              onClick={() => setIsLightboxOpen(false)}
+              src={imageUrl}
+              alt={prompt}
+              className="max-w-full max-h-full"
+              width={window.innerWidth * 0.5}
+              height={window.innerHeight * 0.2}
+            />
+          </span>
           <button
             className="absolute top-4 right-4 text-white text-2xl"
             onClick={() => setIsLightboxOpen(false)}

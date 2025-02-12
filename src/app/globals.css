@@ -64,3 +64,83 @@
 .animate-fadeIn {
     animation: fadeIn 0.2s ease-out forwards;
 }
+
+/* Add these view transition styles */
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes slide-from-right {
+    from { transform: translateX(30px); }
+    to { transform: translateX(0); }
+}
+
+@keyframes slide-to-left {
+    from { transform: translateX(0); }
+    to { transform: translateX(-30px); }
+}
+
+::view-transition-old(root) {
+    animation: 90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+}
+
+::view-transition-new(root) {
+    animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+}
+
+/* Add smooth transitions for cards */
+::view-transition-old(*),
+::view-transition-new(*) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+::view-transition-image-pair(*) {
+    isolation: auto;
+}
+
+/* Ensure content stays visible during transitions */
+.view-transition-group {
+    animation-duration: 0.5s;
+}
+
+/* Add these classes */
+.dm-serif {
+  font-family: var(--font-dm-serif);
+}
+
+.dm-sans {
+  font-family: var(--font-dm-sans);
+}
+
+.playfair {
+  font-family: var(--font-playfair);
+}
+
+.roboto {
+  font-family: var(--font-roboto);
+}
+
+.lora {
+  font-family: var(--font-lora);
+}
+
+.montserrat {
+  font-family: var(--font-montserrat);
+}
+
+.source-code {
+  font-family: var(--font-source-code);
+}
+
+.inter {
+  font-family: var(--font-inter);
+}
