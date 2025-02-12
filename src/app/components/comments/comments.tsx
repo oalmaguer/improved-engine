@@ -43,7 +43,6 @@ export default function Comments({ imageId }: CommentsProps) {
   }, [imageId]);
 
   const fetchComments = async () => {
-    console.log("Fetching comments for image:", imageId);
     const { data, error } = await supabase
       .from("comments")
       .select(
@@ -61,8 +60,8 @@ export default function Comments({ imageId }: CommentsProps) {
       return;
     }
 
-    console.log("Fetched comments:", data);
-    setComments(data || []);
+    let resp: any = data;
+    setComments(resp);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

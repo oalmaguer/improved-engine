@@ -71,8 +71,6 @@ export default function ImageModal({
           {/* Comments Section - Right Half */}
           <div className="w-1/2 h-full bg-dark-800/95 backdrop-blur-sm border-l border-primary-500/10">
             <div className="h-full overflow-y-auto p-8 animate-fadeIn scrollbar-hide">
-              {/* Debug log */}
-              {console.log("Rendering Comments with imageId:", imageId)}
               <Comments imageId={imageId} />
             </div>
           </div>
