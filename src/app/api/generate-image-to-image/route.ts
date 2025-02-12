@@ -1,33 +1,31 @@
 import { NextResponse } from "next/server";
 
+// Update the model URL to use Google Imagen-3
 const MODEL_URL = "black-forest-labs/flux-dev";
 
 const MODEL_CONFIG = {
   input: {
     prompt: "",
     image: "",
-    go_fast: false,
-    guidance: 8.5,
-    megapixels: "1",
+    num_inference_steps: 28,
     num_outputs: 1,
-    aspect_ratio: "1:1",
+    guidance_scale: 3.5,
     output_format: "jpg",
-    output_quality: 95,
-    prompt_strength: 0.75,
-    num_inference_steps: 50,
+    prompt_strength: 0.8,
+    output_quality: 80,
     negative_prompt:
-      "blurry, low quality, distorted layout, wrong perspective, bad architecture, ugly, deformed, disfigured, watermark, text, signature, duplicate, multiple images, split image",
+      "blurry, low quality, distorted layout, wrong perspective, bad architecture, ugly, deformed, disfigured, watermark, text, signature",
   },
 };
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const imageFile = formData.get("image") as File;
+    const image = formData.get("image") as File;
     const prompt = formData.get("prompt") as string;
-    const styles = formData.getAll("styles") as string[]; // Get all selected styles
+    const styles = formData.getAll("styles") as string[];
 
-    if (!imageFile || !prompt) {
+    if (!image) {
       return NextResponse.json(
         { error: "Image and prompt are required" },
         { status: 400 }
@@ -35,9 +33,11 @@ export async function POST(request: Request) {
     }
 
     // Convert image to base64
-    const bytes = await imageFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = buffer.toString("base64");
+    const bytes = await image.arrayBuffer();
+    const base64Image = Buffer.from(bytes).toString("base64");
+
+    // Combine prompt with styles
+    const combinedPrompt = [prompt, ...styles].join(", ");
 
     // Verify API token
     if (!process.env.REPLICATE_API_TOKEN) {
@@ -48,23 +48,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Construct full prompt with styles
-    let fullPrompt = prompt;
-    if (styles && styles.length > 0) {
-      const stylePrompts = styles.join(", "); // Join styles into a comma-separated string
-      fullPrompt += `, ${stylePrompts}`;
-    }
-    console.log("Enhanced prompt with styles:", fullPrompt);
-
     // Log request details (without sensitive data)
-    console.log("Making request to Replicate API with prompt:", fullPrompt);
+    console.log("Making request to Replicate API with prompt:", combinedPrompt);
 
-    // Update model config with prompt and image
-    const config = { ...MODEL_CONFIG };
-    config.input.prompt = fullPrompt;
-    config.input.image = `data:image/jpeg;base64,${base64Image}`;
-
-    // Call Replicate API
+    console.log("prompt", combinedPrompt);
+    // Call Replicate API with updated configuration
     const response = await fetch(
       `https://api.replicate.com/v1/models/${MODEL_URL}/predictions`,
       {
@@ -72,8 +60,15 @@ export async function POST(request: Request) {
         headers: {
           Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
           "Content-Type": "application/json",
+          Prefer: "wait", // Add this header for Imagen-3
         },
-        body: JSON.stringify(config),
+        body: JSON.stringify({
+          input: {
+            ...MODEL_CONFIG.input,
+            image: `data:image/jpeg;base64,${base64Image}`,
+            prompt: combinedPrompt,
+          },
+        }),
       }
     );
 
@@ -83,9 +78,9 @@ export async function POST(request: Request) {
       console.error("Replicate API Error Details:", {
         status: response.status,
         statusText: response.statusText,
-        prompt: fullPrompt, // Include prompt in error log
+        prompt: combinedPrompt, // Include prompt in error log
         modelUrl: MODEL_URL, // Include model URL
-        config: config, // Include config
+        config: MODEL_CONFIG, // Include config
       });
       return NextResponse.json(
         {

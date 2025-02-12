@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useUser } from "@/contexts/UserContext";
 import toast, { Toaster } from "react-hot-toast";
 import ImageLightbox from "../components/image-lightbox/image-lightbox";
+import ImageModal from "../components/image-modal/image-modal";
 
 const styles = {
   realistic: {
@@ -58,6 +59,8 @@ export default function ImageToImage() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string>("");
   const [selectedStyles, setSelectedStyles] = useState<Set<any>>(new Set());
+  const [showModal, setShowModal] = useState(false);
+  const [currentImageId, setCurrentImageId] = useState<number | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -93,10 +96,10 @@ export default function ImageToImage() {
       return;
     }
 
-    if (!prompt.trim()) {
-      toast.error("Please enter a prompt");
-      return;
-    }
+    // if (!prompt.trim()) {
+    //   toast.error("Please enter a prompt");
+    //   return;
+    // }
 
     setIsLoading(true);
     try {
@@ -128,23 +131,27 @@ export default function ImageToImage() {
       const imageUrl = Array.isArray(data.imageUrl)
         ? data.imageUrl[0]
         : data.imageUrl;
-      setGeneratedImage(imageUrl);
 
       // Save to Supabase
-      const categories = Array.from(selectedStyles).map(
-        (style) => styles[style].name
-      );
-      categories.push("Image to Image"); // Add category to distinguish from furniture transform
-      const { error: supabaseError } = await supabase.from("images").insert([
-        {
-          prompt: prompt, // Save the user's main prompt, not style prompts
-          image_url: imageUrl,
-          user_id: user.id,
-          categories: categories,
-        },
-      ]);
+      const { data: savedImage, error: supabaseError } = await supabase
+        .from("images")
+        .insert([
+          {
+            prompt: prompt,
+            image_url: imageUrl,
+            user_id: user.id,
+            categories: Array.from(selectedStyles).map(
+              (style) => styles[style].name
+            ),
+          },
+        ])
+        .select()
+        .single();
 
       if (supabaseError) throw supabaseError;
+
+      setCurrentImageId(savedImage.id);
+      setGeneratedImage(imageUrl);
       toast.success("Image generated successfully!");
     } catch (error) {
       console.error("Error generating image:", error);
@@ -276,17 +283,29 @@ export default function ImageToImage() {
                   </div>
                 </div>
 
-                {/* Transformed Image */}
+                {/* Generated Image */}
                 <div>
                   <h4 className="text-sm text-primary-300/70 mb-2">
-                    Transformed Image
+                    Generated Image
                   </h4>
-                  <div className="relative aspect-square rounded-2xl overflow-hidden">
+                  <div
+                    className="relative w-full max-h-[500px] rounded-2xl overflow-hidden cursor-pointer group"
+                    onClick={() => {
+                      if (currentImageId) {
+                        setShowModal(true);
+                      }
+                    }}
+                  >
                     <ImageLightbox
                       src={generatedImage}
-                      alt="Transformed image"
-                      className="w-full h-full object-cover"
+                      alt="Generated image"
+                      className="w-full h-full object-contain"
                     />
+                    <div className="absolute inset-0 bg-dark-900/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center">
+                      <span className="text-primary-100">
+                        Click to view details
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -314,10 +333,10 @@ export default function ImageToImage() {
           {/* Transform Button */}
           <button
             onClick={generateImage}
-            disabled={isLoading || !selectedImage || !prompt.trim()}
+            disabled={isLoading || !selectedImage}
             className={`w-full py-3 px-4 rounded-xl text-white font-medium transition-all duration-200
               ${
-                isLoading || !selectedImage || !prompt.trim()
+                isLoading || !selectedImage
                   ? "bg-primary-500/50 cursor-not-allowed"
                   : "bg-primary-500 hover:bg-primary-600 shadow-glow hover:shadow-glow-lg"
               }`}
@@ -333,6 +352,18 @@ export default function ImageToImage() {
           </button>
         </div>
       </div>
+
+      {/* Add Modal */}
+      {showModal && currentImageId && (
+        <ImageModal
+          imageUrl={generatedImage}
+          alt="Generated image"
+          imageId={currentImageId}
+          prompt={prompt}
+          styles={Array.from(selectedStyles).map((style) => styles[style].name)}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 }

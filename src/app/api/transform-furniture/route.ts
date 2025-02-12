@@ -1,17 +1,31 @@
 import { NextResponse } from "next/server";
 
-const MODEL_URLS = {
-  "flux-dev": "black-forest-labs/flux-dev",
-} as const;
+// Update the model URL to use Google Imagen-3
+const MODEL_URL = "black-forest-labs/flux-dev";
+
+const MODEL_CONFIG = {
+  input: {
+    prompt: `Highly detailed, cinematic, ultra-realistic, immersive jungle-inspired interior, dynamic lighting. 
+      Detect the furniture and add details based on the style requested. Make sure to change the lighting and time of day to match the style requested.`,
+    image: "",
+    num_inference_steps: 35,
+    num_outputs: 1,
+    guidance_scale: 3,
+    output_format: "jpg",
+    prompt_strength: 0.7,
+    output_quality: 90,
+    negative_prompt:
+      "blurry, low quality, distorted layout, wrong perspective, bad architecture, ugly, deformed, disfigured, watermark, text, signature",
+  },
+};
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const imageFile = formData.get("image") as File;
+    const image = formData.get("image") as File;
     const prompt = formData.get("prompt") as string;
-    const model = formData.get("model") as string;
 
-    if (!imageFile || !prompt) {
+    if (!image || !prompt) {
       return NextResponse.json(
         { error: "Image and prompt are required" },
         { status: 400 }
@@ -19,9 +33,8 @@ export async function POST(request: Request) {
     }
 
     // Convert image to base64
-    const bytes = await imageFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = buffer.toString("base64");
+    const bytes = await image.arrayBuffer();
+    const base64Image = Buffer.from(bytes).toString("base64");
 
     // Verify API token
     if (!process.env.REPLICATE_API_TOKEN) {
@@ -32,32 +45,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const modelUrl =
-      MODEL_URLS[model as keyof typeof MODEL_URLS] || MODEL_URLS["flux-dev"];
-
-    // Call Replicate API
+    // Call Replicate API with updated configuration
     const response = await fetch(
-      `https://api.replicate.com/v1/models/${modelUrl}/predictions`,
+      `https://api.replicate.com/v1/models/${MODEL_URL}/predictions`,
       {
         method: "POST",
         headers: {
           Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
           "Content-Type": "application/json",
+          Prefer: "wait", // Add this header for Imagen-3
         },
         body: JSON.stringify({
           input: {
+            ...MODEL_CONFIG.input,
             image: `data:image/jpeg;base64,${base64Image}`,
-            prompt: `Transform this room into ${prompt} style, maintain the same layout and furniture placement, make sure the style the user is requested is applied in a way the the user can see the style and notice it very clearly, add more details if you want.`,
-
-            num_inference_steps: model === "flux-schnell" ? 4 : 30,
-            go_fast: false,
-            guidance: 7.2,
-            megapixels: "1",
-            num_outputs: 1,
-            aspect_ratio: "1:1",
-            output_format: "jpg",
-            output_quality: 90,
-            prompt_strength: 0.63,
+            prompt: `Transform this room into ${prompt} style, maintain the same layout and furniture placement, make sure the style is clearly visible and noticeable.`,
           },
         }),
       }

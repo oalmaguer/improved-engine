@@ -7,6 +7,7 @@ import { useUser } from "@/contexts/UserContext";
 import toast, { Toaster } from "react-hot-toast";
 import ImageLightbox from "@/app/components/image-lightbox/image-lightbox";
 import Image from "next/image";
+import Card from "../components/card/card";
 
 const furnitureStyles = {
   futuristic: {
@@ -381,19 +382,13 @@ export default function FurnitureTransform() {
                     Transformed Room
                   </h4>
                   <div className="relative w-full max-h-[500px] rounded-2xl overflow-hidden">
-                    <ImageLightbox
+                    <Image
                       src={generatedImage}
                       alt="Transformed room"
+                      width={500}
+                      height={500}
                       className="w-full h-full object-contain"
-                    >
-                      <Image
-                        src={generatedImage}
-                        alt="Transformed room"
-                        width={500}
-                        height={500}
-                        className="w-full h-full object-contain"
-                      />
-                    </ImageLightbox>
+                    />
                   </div>
                 </div>
               </div>

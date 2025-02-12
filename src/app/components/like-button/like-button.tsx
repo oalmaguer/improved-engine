@@ -26,8 +26,8 @@ export default function LikeButton({ imageId, initialLikes }: LikeButtonProps) {
         .eq("id", user.id)
         .single();
 
-      if (data && data.liked_images) {
-        setIsLiked(data.liked_images.includes(imageId.toString()));
+      if (data && data.liked_images && imageId) {
+        setIsLiked(data.liked_images.includes(imageId?.toString()));
       }
     }
 

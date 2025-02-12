@@ -553,6 +553,7 @@ export default function Home() {
       {/* Modal */}
       {showModal && currentImageId && (
         <ImageModal
+          prompt={prompt}
           imageUrl={generatedImage}
           alt="Generated image"
           imageId={currentImageId}

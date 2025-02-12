@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 import ImageLightbox from "../components/image-lightbox/image-lightbox";
 import Image from "next/image";
+import ImageModal from "../components/image-modal/image-modal";
 
 const styles = {
   modern: {
@@ -49,6 +50,8 @@ export default function TransformFurniture() {
   const [selectedImagePreview, setSelectedImagePreview] = useState<
     string | null
   >(null);
+  const [showModal, setShowModal] = useState(false);
+  const [currentImageId, setCurrentImageId] = useState<number | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,15 +69,20 @@ export default function TransformFurniture() {
     setSelectedImagePreview(imageUrl);
   };
 
-  const transformFurniture = async () => {
+  const handleSubmit = async () => {
     if (!user) {
       toast.error("Please sign in to transform furniture");
       router.push("/auth");
       return;
     }
 
-    if (!selectedImage || !selectedStyle) {
-      toast.error("Please select an image and style");
+    if (!selectedImage) {
+      toast.error("Please select an image");
+      return;
+    }
+
+    if (!selectedStyle && !prompt.trim()) {
+      toast.error("Please select a style or enter a prompt");
       return;
     }
 
@@ -82,8 +90,15 @@ export default function TransformFurniture() {
     try {
       const formData = new FormData();
       formData.append("image", selectedImage);
-      formData.append("style", styles[selectedStyle].name);
-      if (prompt) formData.append("prompt", prompt);
+
+      const finalPrompt = [
+        selectedStyle ? styles[selectedStyle].name : "",
+        prompt.trim(),
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      formData.append("prompt", finalPrompt);
 
       const response = await fetch("/api/transform-furniture", {
         method: "POST",
@@ -95,23 +110,28 @@ export default function TransformFurniture() {
       }
 
       const data = await response.json();
-      setGeneratedImage(
-        Array.isArray(data.imageUrl) ? data.imageUrl[0] : data.imageUrl
-      );
+      const imageUrl = Array.isArray(data.imageUrl)
+        ? data.imageUrl[0]
+        : data.imageUrl;
 
-      // Save to Supabase
-      const { error } = await supabase.from("images").insert([
-        {
-          prompt: `${styles[selectedStyle].name} style transformation${
-            prompt ? `: ${prompt}` : ""
-          }`,
-          image_url: data.imageUrl[0],
-          user_id: user.id,
-          categories: ["Furniture", styles[selectedStyle].name],
-        },
-      ]);
+      const { data: savedImage, error: supabaseError } = await supabase
+        .from("images")
+        .insert([
+          {
+            prompt: finalPrompt,
+            image_url: imageUrl,
+            user_id: user.id,
+            categories: [styles[selectedStyle].name],
+          },
+        ])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (supabaseError) throw supabaseError;
+
+      setCurrentImageId(savedImage.id);
+      setGeneratedImage(imageUrl);
+      setShowModal(true);
       toast.success("Room transformed successfully!");
     } catch (error) {
       toast.error("Failed to transform room");
@@ -220,7 +240,7 @@ export default function TransformFurniture() {
 
           {/* Transform Button */}
           <button
-            onClick={transformFurniture}
+            onClick={handleSubmit}
             disabled={isLoading || !selectedImage || !selectedStyle}
             className="w-full py-3 px-4 rounded-lg bg-black text-white font-medium hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-300"
           >
@@ -253,15 +273,29 @@ export default function TransformFurniture() {
 
                 {/* Generated Image */}
                 <div>
-                  <h4 className="text-lg font-medium mb-2">Transformed Room</h4>
-                  <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-100">
+                  <h4 className="text-sm text-primary-300/70 mb-2">
+                    Transformed Room
+                  </h4>
+                  <div
+                    className="relative w-full max-h-[500px] rounded-2xl overflow-hidden cursor-pointer group"
+                    onClick={() => {
+                      if (currentImageId) {
+                        setShowModal(true);
+                      }
+                    }}
+                  >
                     <Image
                       src={generatedImage}
                       alt="Transformed room"
-                      className="w-full h-full"
-                      width={800}
-                      height={800}
+                      width={500}
+                      height={500}
+                      className="w-full h-full object-contain"
                     />
+                    <div className="absolute inset-0 bg-dark-900/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center">
+                      <span className="text-primary-100">
+                        Click to view details
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -303,6 +337,17 @@ export default function TransformFurniture() {
           )}
         </div>
       </div>
+
+      {showModal && currentImageId && (
+        <ImageModal
+          imageUrl={generatedImage}
+          alt="Transformed room"
+          imageId={currentImageId}
+          prompt={prompt}
+          styles={[styles[selectedStyle].name]}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 }

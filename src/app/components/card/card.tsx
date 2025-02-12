@@ -27,9 +27,10 @@ interface CardProps {
   variant?: "grid" | "slider";
 }
 
-export default function Card({ image, variant = "grid" }: any) {
+export default function Card({ image, variant = "grid", source = null }: any) {
   const id = useId();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const containerClasses = {
     grid: "bg-dark-800/50 aspect-square relative rounded-3xl overflow-hidden group/card",
@@ -61,8 +62,8 @@ export default function Card({ image, variant = "grid" }: any) {
         onClick={handleCardClick}
       >
         <Image
-          src={image.image_url}
-          alt={image.prompt}
+          src={image.image_url || source}
+          alt={image.prompt || "Generated image"}
           fill
           className="object-cover transition-transform duration-300 group-hover/card:scale-110"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -177,10 +178,18 @@ export default function Card({ image, variant = "grid" }: any) {
       {/* Image Modal */}
       {isModalOpen && (
         <ImageModal
+          prompt={image.prompt}
           imageUrl={image.image_url}
           alt={image.prompt}
           imageId={image.id}
+          styles={image.categories}
           onClose={() => setIsModalOpen(false)}
+          onNext={() => {
+            /* Handle next image */
+          }}
+          onPrevious={() => {
+            /* Handle previous image */
+          }}
         />
       )}
     </>
