@@ -19,7 +19,7 @@ import {
 } from "next/font/google";
 import { FontProvider } from "@/contexts/FontContext";
 import FontSwitcher from "./components/font-switcher/font-switcher";
-
+import { ViewTransitions } from "next-view-transitions";
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
@@ -78,25 +78,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${outfit.variable} ${plusJakartaSans.variable} ${dmSerif.variable} ${dmSans.variable} ${playfair.variable} ${roboto.variable} ${lora.variable} ${montserrat.variable} ${sourceCode.variable} ${inter.variable} dark`}
-    >
-      <head>
-        <meta name="view-transition" content="same-origin" />
-      </head>
-      <body className="bg-dark-950 text-white">
-        <UserProvider>
-          <TokenProvider>
-            <FontProvider>
-              <FontSwitcher />
-              <Navbar />
-              {children}
-              <Toaster position="top-center" />
-            </FontProvider>
-          </TokenProvider>
-        </UserProvider>
-      </body>
-    </html>
+    <ViewTransitions>
+      <html
+        lang="en"
+        className={`${outfit.variable} ${plusJakartaSans.variable} ${dmSerif.variable} ${dmSans.variable} ${playfair.variable} ${roboto.variable} ${lora.variable} ${montserrat.variable} ${sourceCode.variable} ${inter.variable} dark`}
+      >
+        <head>
+          <meta name="view-transition" content="same-origin" />
+        </head>
+        <body className="bg-dark-950 text-white">
+          <UserProvider>
+            <TokenProvider>
+              <FontProvider>
+                <FontSwitcher />
+                <Navbar />
+                {children}
+                <Toaster position="top-center" />
+              </FontProvider>
+            </TokenProvider>
+          </UserProvider>
+        </body>
+      </html>
+    </ViewTransitions>
   );
 }

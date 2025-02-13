@@ -1,17 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@/contexts/UserContext";
 import TokenDisplay from "../token-display/token-display";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const { user, profile } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  const isActive = (path: string) => {
+    return pathname === path;
   };
 
   return (
@@ -35,35 +41,71 @@ export default function Navbar() {
           <div className="hidden sm:flex sm:items-center sm:space-x-8">
             <Link
               href="/"
-              className="text-primary-300/70 hover:text-primary-300 transition-colors duration-200"
+              className={`text-primary-300/70 hover:text-primary-300 transition-colors duration-200 relative group
+                ${isActive("/") ? "text-primary-100 bg-primary-500/10" : ""}`}
             >
               Home
+              {isActive("/") && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500/50 rounded-full"></span>
+              )}
             </Link>
             <Link
               href="/gallery"
-              className="text-primary-300/70 hover:text-primary-300 transition-colors duration-200"
+              className={`text-primary-300/70 hover:text-primary-300 transition-colors duration-200 relative group
+                ${
+                  isActive("/gallery")
+                    ? "text-primary-100 bg-primary-500/10"
+                    : ""
+                }`}
             >
               Gallery
+              {isActive("/gallery") && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500/50 rounded-full"></span>
+              )}
             </Link>
             <Link
               href="/image-to-image"
-              className="text-primary-300/70 hover:text-primary-300 transition-colors duration-200"
+              className={`text-primary-300/70 hover:text-primary-300 transition-colors duration-200 relative group
+                ${
+                  isActive("/image-to-image")
+                    ? "text-primary-100 bg-primary-500/10"
+                    : ""
+                }`}
             >
               Image to Image
+              {isActive("/image-to-image") && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500/50 rounded-full"></span>
+              )}
             </Link>
             <Link
               href="/furniture-transform"
-              className="text-primary-300/70 hover:text-primary-300 transition-colors duration-200"
+              className={`text-primary-300/70 hover:text-primary-300 transition-colors duration-200 relative group
+                ${
+                  isActive("/furniture-transform")
+                    ? "text-primary-100 bg-primary-500/10"
+                    : ""
+                }`}
             >
               Furniture Transform
+              {isActive("/furniture-transform") && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500/50 rounded-full"></span>
+              )}
             </Link>
             {user ? (
               <>
                 <Link
                   href="/my-creations"
-                  className="text-primary-300/70 hover:text-primary-300 transition-colors duration-200"
+                  className={`text-primary-300/70 hover:text-primary-300 transition-colors duration-200 relative group
+                    ${
+                      isActive("/my-creations")
+                        ? "text-primary-100 bg-primary-500/10"
+                        : ""
+                    }`}
                 >
                   My Creations
+                  {isActive("/my-creations") && (
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500/50 rounded-full"></span>
+                  )}
                 </Link>
                 <TokenDisplay />
                 <button
@@ -76,9 +118,17 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/auth"
-                className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors duration-200"
+                className={`bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors duration-200 relative group
+                  ${
+                    isActive("/auth")
+                      ? "text-primary-100 bg-primary-500/10"
+                      : ""
+                  }`}
               >
                 Sign In
+                {isActive("/auth") && (
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500/50 rounded-full"></span>
+                )}
               </Link>
             )}
           </div>
